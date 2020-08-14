@@ -1,0 +1,463 @@
+<template>
+<div class="prizeDrawForm">
+  <el-form @submit.native.prevent :model="prizeDrawForm" :rules="dataRule" :inline="false"  ref="prizeDrawForm" label-width="110px" class="demo-ruleForm">
+    <el-steps :active="active" finish-status="success" simple STYLE="margin-bottom: 15PX">
+      <el-step title="基础信息" @click.native="active=0" />
+      <el-step title="详细信息" @click.native="active=1" />
+      <el-step title="注意事项" @click.native="active=2" />
+      <el-step title="风采展示" @click.native="active=3" />
+    </el-steps>
+    <!-- 基础信息 -->
+    <div v-show="active === 0" >
+      <el-form-item label="ID" v-show="false">
+        <el-input v-model="prizeDrawForm.id" autocomplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="抽奖活动名称">
+        <el-input v-model="prizeDrawForm.name" autocomplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="推广微信号">
+        <el-input v-model="prizeDrawForm.wxNum" autocomplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="推广文案">
+        <el-input type="textarea" :rows="8" v-model="prizeDrawForm.expla"></el-input>
+      </el-form-item>
+      <el-form-item label="推广海报">
+        <upload @fileChange="chooseImg" class="avatar-uploader" :width="width" :height="height" :style="imgStyle">
+          <img v-if="prizeDrawForm.poster" :src="prizeDrawForm.poster" style="width: 100%;">
+          <i v-else class="el-icon-plus"></i>
+        </upload>
+        <i v-if="prizeDrawForm.poster" class="el-icon-circle-close-outline" style="position: absolute; left: 180px; top: 6px; color: #fff;" @click="prizeDrawForm.poster=''"></i>
+        <div class="img_size_text">推荐尺寸: {{ 750 }} * {{ 1334 }}</div>
+      </el-form-item>
+      <el-form-item label="奖品管理" >
+        <el-button @click="addModule"> 奖品管理 </el-button>
+      </el-form-item>
+      <el-form-item label="开奖方式">
+        <el-radio-group v-model="prizeDrawForm.lotteryType">
+          <el-radio :label="110">定时开奖</el-radio>
+          <el-radio :label="120">满人数开奖</el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item label="开奖时间" v-if="prizeDrawForm.lotteryType == 110">
+        <el-date-picker
+          v-model="prizeDrawForm.lotteryStartTime"
+          value-format="timestamp"
+          type="datetime"
+          placeholder="选择开奖时间"/>
+      </el-form-item>
+      <el-form-item label="开奖人数" v-if="prizeDrawForm.lotteryType == 120">
+        <el-input v-model="prizeDrawForm.totalNum" autocomplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="参与条件">
+          <el-checkbox v-model="prizeDrawForm.wxFans">公众号粉丝</el-checkbox>
+          <el-checkbox v-model="prizeDrawForm.integral">花费积分</el-checkbox>
+      </el-form-item>
+      <el-form-item label="需要积分" v-if="prizeDrawForm.integral">
+        <el-input v-model="prizeDrawForm.integralNum" autocomplete="off"></el-input>
+      </el-form-item>
+      <!-- <el-form-item label="需要金额" v-if="prizeDrawForm.tagIds.indexOf('B') !== -1">
+        <el-input v-model="prizeDrawForm.price" autocomplete="off"></el-input>
+      </el-form-item> -->
+      <el-form-item>
+        <el-button type="primary" @click="active++">下一步</el-button>
+        <el-button @click="close">取消</el-button>
+      </el-form-item>
+    </div>
+    <!-- 详细信息 -->
+    <div v-show="active === 1">
+      <el-form-item label="分组" v-if="!isMarket">
+        <el-radio-group v-model="checkGroupId">
+          <el-radio-button :key="item.id" v-for="item in groupsThird" :label="item.id">{{ item.label }}</el-radio-button>
+        </el-radio-group>
+        <!-- <el-checkbox v-for="(item, idx) in groupsThird" :key="item.id" border @change="handleCheckedType(item.checked, item.id, idx)">{{ item.label }}</el-checkbox> -->
+      </el-form-item>
+      <el-form-item label="活动时间" prop="time">
+        <el-date-picker
+          v-model="prizeDrawForm.time"
+          type="datetimerange"
+          align="right"
+          :editable="false"
+          :time-arrow-control = "true"
+          start-placeholder="开始时间"
+          end-placeholder="结束时间"
+          :default-time="['00:00:00', '00:00:00']">
+        </el-date-picker>
+      </el-form-item>
+      <el-form-item label="凭证使用时间" prop="useTime">
+        <el-date-picker
+          v-model="prizeDrawForm.useTime"
+          type="datetimerange"
+          align="right"
+          :editable="false"
+          :time-arrow-control = "true"
+          start-placeholder="开始时间"
+          end-placeholder="结束时间"
+          :default-time="['00:00:00', '00:00:00']">
+        </el-date-picker>
+      </el-form-item>
+      <el-form-item label="详情" >
+        <quill-editor ref="shopDetailInfo" :pro_content="prizeDrawForm.fullText"  @contentChange="contentChange"/>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="active--">上一步</el-button>
+        <el-button type="primary" @click="active++">下一步</el-button>
+        <el-button @click="close">取消</el-button>
+      </el-form-item>
+    </div>
+    <!-- 购买须知 -->
+    <div v-show="active === 2">
+      <el-form-item label="购买须知" >
+        <kv-edit :data="prizeDrawForm.attention" @changeData="getKvData"/>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="active--">上一步</el-button>
+        <el-button type="primary" @click="active++">下一步</el-button>
+        <el-button @click="close">取消</el-button>
+      </el-form-item>
+    </div>
+    <!-- 风采展示 -->
+    <div v-show="active === 3">
+      <el-form-item label="风采展示" >
+        <photo-show :data="prizeDrawForm.photoShow" @changeData="getPhotoShowData"/>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="active--">上一步</el-button>
+        <el-button type="primary" @click="submitForm">提交</el-button>
+        <el-button @click="close">取消</el-button>
+        <el-checkbox style="float: right;" v-if="isNew && isAuth('/activityTemplate/add')" v-model="saveData">保存为新模板</el-checkbox>
+      </el-form-item>
+    </div>
+  </el-form>
+  <!-- 选择奖品的弹窗 -->
+  <el-dialog :title="'奖品信息管理'" :close-on-click-modal="false" :visible.sync="openItem" width="650px" append-to-body>
+    <form-item ref="formItem"  v-if="openItem" @close="openItem=false" @success="changeSellData" />
+  </el-dialog>
+</div>
+</template>
+<script>
+import formItem from './itemTable'
+import { timestamp } from '../../../utils/timeChange.js'
+import { getGroup, getGroupChild } from '../utils/getGroup.js'
+import quillEditor from '../../utils/editor'
+import PhotoShow from '../utils/PhotoShow.vue'
+import kvEdit from '../utils/kvMessage'
+import Upload from '../../utils/upload.vue'
+export default {
+  props: {
+    formType: {}
+  },
+  data() {
+    return{
+      width: 375,
+      height: 667,
+      imgStyle: {
+        height: '360px',
+        width: '200px',
+        lineHeight: '360px'
+      },
+      active: 0,
+      openItem: false,
+      groups: [],
+      groupsThird: [],
+      checkGroupId: '',
+      isMarket: false,
+      isNew: true,
+      saveData: false,
+      prizeDrawForm: {
+        name: '',
+        id: '',
+        poster: '',
+        lotteryStartTime: (new Date()).getTime(),
+        lotteryType: 110,
+        photoShow: '[]',
+        attention: '[]',
+        prizeJson: '[]',
+        time: [],
+        useTime: [],
+        tagIds: [],
+        wxNum: '',
+        expla: '',
+        totalNum: 0,
+        fullText: '',
+        integralNum: '',
+        wxFans: false,
+        integral: false
+      },
+      dataRule: {
+        name: [
+          { required: true, message: '抽奖活动名称必填', trigger: 'blur' }
+        ],
+        time: [
+          { required: true, message: '请选择活动时间', trigger: 'blur' }
+        ],
+        useTime: [
+          { required: true, message: '请选择凭证使用时间', trigger: 'blur' }
+        ],
+      }
+    }
+  },
+  components: {
+    formItem,
+    quillEditor,
+    PhotoShow,
+    kvEdit,
+    Upload
+  },
+  methods: {
+    chooseImg(data) {
+      this.prizeDrawForm.poster = data
+    },
+    addModule() {
+      this.openItem = true
+      this.$nextTick(() => {
+        this.$refs.formItem.tableList = JSON.parse(this.prizeDrawForm.prizeJson)
+      })
+    },
+    // 富文本内容
+    contentChange(data) {
+      this.prizeDrawForm.fullText = data
+    },
+    close() {
+      this.$emit('close')
+    },
+    // 获得风采展示数据
+    getPhotoShowData(data) {
+      this.prizeDrawForm.photoShow = data
+    },
+    // 获得注意事项数据
+    getKvData(data) {
+      this.prizeDrawForm.attention = data
+    },
+    // 获得奖品选项JSON
+    changeSellData(data) {
+      this.prizeDrawForm.prizeJson = data
+      this.openItem = false
+    },
+    init({ data }) {
+      this.isNew = false
+      const url = this.apiList.shop.prizeDraw.detail
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ activityId: data.activityId, activityType: 701 }, url, true)
+      }).then(({ data }) => {
+        this.prizeDrawForm.poster = data.data.poster ?  data.data.poster : ''
+        this.prizeDrawForm.totalNum = data.data.totalNum
+        this.prizeDrawForm.lotteryType = data.data.lotteryType
+        this.prizeDrawForm.lotteryStartTime = data.data.lotteryStartTime
+        this.prizeDrawForm.expla = data.data.expla ? data.data.expla : ''
+        this.prizeDrawForm.wxNum = data.data.wxNum ? data.data.wxNum : ''
+        this.prizeDrawForm.activityId = data.data.activityId
+        this.prizeDrawForm.activityType = 701
+        this.prizeDrawForm.name = data.data.name
+        this.prizeDrawForm.wxFans =  data.data.wxFans
+        this.prizeDrawForm.integral = data.data.integral
+        this.prizeDrawForm.showToC = data.data.showToC
+        this.prizeDrawForm.integralNum = data.data.integralNum
+        this.prizeDrawForm.fullText = data.data.fullText ? data.data.fullText : ''
+        this.prizeDrawForm.time = []
+        this.prizeDrawForm.time[0] = data.data.startTime
+        this.prizeDrawForm.time[1] = data.data.endTime
+        this.prizeDrawForm.useTime = []
+        this.prizeDrawForm.useTime[0] = data.data.startUseTime
+        this.prizeDrawForm.useTime[1] = data.data.endUseTime
+        const attentionArr = []
+        // 将注意事项转换成对应的值
+        const attention = data.data.activityNoteEntities && data.data.activityNoteEntities.length > 0 ? data.data.activityNoteEntities : []
+        attention.forEach( element => {
+          attentionArr.push({
+            id: element.id,
+            noteKey: element.noteKey,
+            noteValue: element.noteValue
+          })
+        })
+        this.prizeDrawForm.attention = JSON.stringify(attentionArr)
+        // 将风采展示转换成对应的值
+        const photoShowArr = []
+        const photoShow = data.data.photoGroupEntities && data.data.photoGroupEntities.length > 0 ? data.data.photoGroupEntities : []
+        photoShow.forEach( element => {
+          photoShowArr.push({
+            id: element.id,
+            url: element.imgUrl
+          })
+        })
+        this.prizeDrawForm.photoShow = JSON.stringify(photoShowArr)
+        // 初始化奖品选项
+        this.prizeDrawForm.prizeJson = JSON.stringify(data.data.entities)
+        // 初始化选择
+        this.getGroup().then(() => {
+          if (data.data.activityGroupIds) {
+            let arr = data.data.activityGroupIds.split(',')
+            arr = arr.filter(item => item !== '')
+            arr.forEach(item => {
+              this.groupsThird.findIndex(v => v.id === Number(item)) !== -1 ? this.checkGroupId = Number(item) : ''
+            })
+          }
+        })
+      })
+    },
+    // 通过模板写入数据
+    setData(data) {
+      this.isNew = false
+      this.prizeDrawForm.totalNum = data.totalNum
+      this.prizeDrawForm.lotteryType = data.lotteryType
+      this.prizeDrawForm.lotteryStartTime = data.lotteryStartTime
+      this.prizeDrawForm.expla = data.expla
+      this.prizeDrawForm.wxNum = data.wxNum
+      this.prizeDrawForm.poster = data.poster
+      this.prizeDrawForm.activityType = 701
+      this.prizeDrawForm.name = data.name
+      this.prizeDrawForm.wxFans =  data.wxFans
+      this.prizeDrawForm.integral = data.integral
+      this.prizeDrawForm.showToC = data.showToC
+      this.prizeDrawForm.integralNum = data.integralNum
+      this.prizeDrawForm.fullText = data.fullText ? data.fullText : ''
+      this.prizeDrawForm.time = []
+      this.prizeDrawForm.time[0] = data.startTime
+      this.prizeDrawForm.time[1] = data.endTime
+      this.prizeDrawForm.useTime = []
+      this.prizeDrawForm.useTime[0] = data.startUseTime
+      this.prizeDrawForm.useTime[1] = data.endUseTime
+      const attentionArr = []
+      // 将注意事项转换成对应的值
+      const attention = data.attention ? JSON.parse(data.attention) : []
+      attention.forEach( element => {
+        attentionArr.push({
+          id: element.id,
+          noteKey: element.noteKey,
+          noteValue: element.noteValue
+        })
+      })
+      this.prizeDrawForm.attention = JSON.stringify(attentionArr)
+      // 将风采展示转换成对应的值
+      const photoShowArr = []
+      const photoShow = data.photoShow ? JSON.parse(data.photoShow) : []
+      photoShow.forEach( element => {
+        photoShowArr.push({
+          id: element.id,
+          url: element.url
+        })
+      })
+      this.prizeDrawForm.photoShow = JSON.stringify(photoShowArr)
+      // 初始化奖品选项
+      this.prizeDrawForm.prizeJson = data.prizeJson
+      // 初始化选择
+      this.getGroup().then(() => {
+        if (data.activityGroupIds) {
+          let arr = data.activityGroupIds.split(',')
+          arr = arr.filter(item => item !== '')
+          arr.forEach(item => {
+            this.groupsThird.findIndex(v => v.id === Number(item)) !== -1 ? this.checkGroupId = Number(item) : ''
+          })
+        }
+      })
+    },
+    getGroup() {
+      if (this.$cookie.get('moduleType') === '301') {
+        this.isMarket = true
+        return
+      }
+      return new Promise(resolve => {
+        const url = this.apiList.module.moduleShop.getDetail
+        this.$http({
+          url: this.$http.adornUrl(url),
+          method: 'post',
+          data: this.$http.adornData('', url, true)
+        }).then(({ data }) => {
+          if (data.result) {
+            this.groups = getGroup(data.data.groupIds, 2)
+            this.groupsThird = getGroup(data.data.groupIds, 3)
+          }
+          resolve()
+        })
+      })
+    },
+    // 提交表单
+    submitForm() {
+      this.$refs['prizeDrawForm'].validate((valid) => {
+        let url = this.apiList.shop.prizeDraw.add
+        if (this.formType === 'edit') {
+          url = this.apiList.shop.prizeDraw.edit
+        }
+        if (valid) {
+          const submitData = JSON.parse(JSON.stringify(this.prizeDrawForm))
+          submitData.startTime = typeof(this.prizeDrawForm.time[0]) === 'number' ? this.prizeDrawForm.time[0] : timestamp(this.prizeDrawForm.time[0])
+          submitData.endTime = typeof(this.prizeDrawForm.time[1]) === 'number' ? this.prizeDrawForm.time[1] : timestamp(this.prizeDrawForm.time[1])
+          submitData.startUseTime = typeof(this.prizeDrawForm.useTime[0]) === 'number' ? this.prizeDrawForm.useTime[0] : timestamp(this.prizeDrawForm.useTime[0])
+          submitData.endUseTime = typeof(this.prizeDrawForm.useTime[1]) === 'number' ? this.prizeDrawForm.useTime[1] : timestamp(this.prizeDrawForm.useTime[1])
+          // 根据checkGroupId 拼接groupid, 二级分类不变，添加三级分类
+          submitData.activityGroupIds = []
+          this.groups.forEach((v, i ,a) => {
+            submitData.activityGroupIds.push(v.id)
+          })
+          submitData.activityGroupIds.push(this.checkGroupId)
+          submitData.activityGroupIds = submitData.activityGroupIds.join(',')
+          if (this.$cookie.get('moduleType') === '301') {
+            submitData.activityGroupIds = "8"
+          }
+          if(submitData.lotteryType == 120) {
+            submitData.lotteryStartTime = ''
+          }
+          if(submitData.lotteryType == 110) {
+            submitData.totalNum = ''
+          }
+          if(this.prizeDrawForm.prizeJson == '[]') {
+            this.$confirm('您尚未设置奖品，有可能导致开奖失败, 是否继续?', '提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'danger' }
+            ).then(() => {
+              this.ajaxData(submitData, url)
+            }).catch(() => {
+              console.log('1213121213')
+            })
+          } else {
+            const _data = JSON.parse(this.prizeDrawForm.prizeJson)
+            _data.forEach( (item, index) => {
+              if(!item.rank) {
+                item.rank = `${index + 1}等奖`
+              }
+            })
+            submitData.prizeJson = JSON.stringify(_data)
+            this.ajaxData(submitData, url)
+            if(this.isNew) {
+              this.saveTemplate(submitData)
+            }
+          }
+        }
+      })
+    },
+    // 保存为新模板
+    saveTemplate(data) {
+      const url = this.apiList.shop.template.add
+      const submitData = JSON.parse(JSON.stringify(data))
+      submitData.type = 701
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData(submitData, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.$message({ type: 'success', message: '提交成功' })
+          this.$emit('success')
+        }
+      })
+    },
+    ajaxData(submitData, url) {
+      this.active ++
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData(submitData, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.$message({ type: 'success', message: '提交成功' })
+          this.$emit('success')
+        }
+      })
+    }
+  },
+  created() {
+    if(this.formType == 'add') {
+      this.getGroup()
+    }
+  }
+}
+</script>

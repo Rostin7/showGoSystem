@@ -1,0 +1,111 @@
+<template>
+  <div>
+    <el-row :gutter="15">
+      <el-col :span="24">
+        <el-card shadow="never">
+          <el-form @submit.native.prevent :inline="true">
+            <el-form-item>
+              <p class="main_header">下架提醒列表</p>
+            </el-form-item>
+          </el-form>
+          <el-table :data="tableList" v-loading="listLoading"  element-loading-text="拼命加载中">
+            <el-table-column prop="name" label="名称" align="center" header-align="center">
+              <template slot-scope="scope">
+                <preview :activeData="scope.row"/>
+              </template>
+            </el-table-column>
+            <el-table-column prop="beginTime" label="活动时间" align="center" header-align="center" width="300">
+              <template slot-scope="scope">
+                <p style="margin: 0">活动开始时间：{{ timeChange('Y-m-d H:i:s', scope.row.startTime) }}</p>
+                <p style="margin: 0">活动结束时间：{{ timeChange('Y-m-d H:i:s', scope.row.endTime) }}</p>
+                <p style="margin: 0">凭证使用开始时间：{{ timeChange('Y-m-d H:i:s', scope.row.startUseTime) }}</p>
+                <p style="margin: 0">凭证使用结束时间：{{ timeChange('Y-m-d H:i:s', scope.row.endUseTime) }}</p>
+              </template>
+            </el-table-column>
+            <el-table-column prop="imgUrl" label="主图" align="center" header-align="center" width="200">
+              <template slot-scope="scope">
+                <img :src="scope.row.imgUrl" alt="" style="max-width: 100%;">
+              </template>
+            </el-table-column>
+            <el-table-column prop="price" label="出售信息" align="center" header-align="center" width="200"  >
+              <template slot-scope="scope">
+                <div v-if="scope.row.activityType == 101">
+                  <p style="margin: 0">报名价格： ￥{{scope.row.price/100}}</p>
+                  <p style="margin: 0">原始价格： ￥{{scope.row.showPrice/100}}</p>
+                  <p style="margin: 0">报名数量： {{scope.row.totalNum}}</p>
+                  <p style="margin: 0">最大购买数量： {{scope.row.totalCanBuy}}</p>
+                  <p v-if="scope.row.resellPrice" style="margin: 0">分销价格：￥{{scope.row.resellPrice / 100}}</p>
+                </div>
+                <div v-if="scope.row.activityType == 301">
+                  <p style="margin: 0">促销价格： ￥{{scope.row.price/100}}</p>
+                  <p style="margin: 0">原始价格： ￥{{scope.row.showPrice/100}}</p>
+                  <p style="margin: 0">促销数量： {{scope.row.totalNum}}</p>
+                  <p style="margin: 0">最大购买数量： {{scope.row.totalCanBuy}}</p>
+                  <p v-if="scope.row.resellPrice" style="margin: 0">分销价格：￥{{scope.row.resellPrice / 100}}</p>
+                </div>
+                <div v-if="scope.row.activityType == 701">
+                  <p style="margin: 0" v-for="(item, index) in scope.row.entities" :key="index">{{ `${item.prizeName}*${item.prizeNum}件` }}</p>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+          <!--工具条-->
+          <el-pagination
+            layout="total, prev, pager, next"
+            background
+            :page-size="pageSize"
+            :total="total"
+            style="text-align:center;"
+            @current-change="handleCurrentChange"
+          />
+        </el-card>
+      </el-col>
+    </el-row>
+  </div>
+</template>
+<script>
+import preview from '../preview/index'
+export default {
+   data() {
+    return {
+      tableList: [],
+      listLoading: true,
+      total: 0,
+      page: 1,
+      pageSize: 10,
+      chooseId: '',
+      state: '',
+      searchName: '',
+      filterState: '筛选'
+    }
+  },
+  components: {
+    preview
+  },
+  methods: {
+    getDataList() {
+      this.listLoading = true
+      const url = this.apiList.showToCApproval.overdue
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ page: this.page, size: this.pageSize, }, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.tableList = data.data.records
+          this.total = data.data.total
+        }
+        this.listLoading = false
+      })
+    },
+    // 分页组件切换
+    handleCurrentChange(value) {
+      this.page = value
+      this.getDataList()
+    },
+  },
+  created() {
+    this.getDataList()
+  }
+}
+</script>

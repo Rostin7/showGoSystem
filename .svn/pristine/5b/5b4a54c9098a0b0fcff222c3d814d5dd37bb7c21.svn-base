@@ -1,0 +1,444 @@
+<template>
+<div class="commodityForm">
+  <el-form :model="commodityForm" @submit.native.prevent :rules="dataRule" :inline="false"  ref="commodityForm" label-width="110px" class="demo-ruleForm">
+    <el-steps :active="active" finish-status="success" simple STYLE="margin-bottom: 15PX">
+      <el-step title="基础信息"></el-step>
+      <el-step title="详细信息"></el-step>
+      <el-step title="注意事项"></el-step>
+      <el-step title="风采展示"></el-step>
+    </el-steps>
+    <!-- 基础信息 -->
+    <div v-show="active === 0" >
+      <el-form-item label="ID" v-show="false">
+        <el-input v-model="commodityForm.id" autocomplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="名称"  prop="name">
+        <el-input v-model="commodityForm.name" autocomplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="总数量"  prop="totalNum">
+        <el-input v-model="commodityForm.totalNum" autocomplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="售价"  prop="price">
+        <el-input v-model="commodityForm.price" autocomplete="off" @input="commodityForm.moduleGetPrice = Math.round(commodityForm.price * Number($cookie.get('moduleGetPrice')) * 100) / 100"></el-input>
+      </el-form-item>
+      <el-form-item label="商户结算价">
+        <el-input v-model="commodityForm.moduleGetPrice" :disabled="true" autocomplete="off" ></el-input>
+      </el-form-item>
+      <el-form-item label="最大购买次数"  prop="totalCanBuy">
+        <el-input v-model="commodityForm.totalCanBuy" autocomplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="销售渠道">
+        <!-- <el-input v-model="commodityForm.sellType" autocomplete="off"></el-input> -->
+        <el-radio-group v-model="commodityForm.sellType">
+          <el-radio :label="1">全部</el-radio>
+          <el-radio :label="101">仅APP</el-radio>
+          <el-radio :label="201">仅小程序</el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item label="开启分销">
+        <!-- <el-input v-model="commodityForm.sellType" autocomplete="off"></el-input> -->
+        <el-radio-group v-model="commodityForm.isSell">
+          <el-radio :label="1">是</el-radio>
+          <el-radio :label="0">否</el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item label="分销信息" v-if="commodityForm.isSell">
+        <el-button @click="sellFromChange"> 分销信息管理 </el-button>
+      </el-form-item>
+      <el-form-item label="主图">
+        <upload @fileChange="chooseImg" class="avatar-uploader" :width="343" :height="160" style="width: 172px;height: 80px; line-height: 80px">
+          <img v-if="commodityForm.mainImgUrl" :src="commodityForm.mainImgUrl" class="avatar">
+          <i v-else class="el-icon-plus"></i>
+        </upload>
+        <div class="test_container">
+          <span>示例：</span>
+          <img src="../../../assets/test_1.png" alt="">  
+        </div>
+        <div class="img_size_text">推荐尺寸: {{ 686 }} * {{ 320 }}</div>
+      </el-form-item>
+      <el-form-item label="封面">
+        <upload @fileChange="chooseImg_imgUrlSquare" :width="244" :height="254" style="width: 122px;height: 127px; line-height: 127px">
+          <img v-if="commodityForm.imgUrlSquare" :src="commodityForm.imgUrlSquare" class="avatar" style="width: 122px;height: 127px">
+          <i v-else class="el-icon-plus"></i>
+        </upload>
+        <div class="test_container">
+          <span>示例：</span>
+          <img class="" src="../../../assets/test_2.png" alt="">  
+        </div>
+        <div class="img_size_text">推荐尺寸: {{ 244 }} * {{ 254 }}</div>
+      </el-form-item>
+      <el-form-item label="上架">
+        <el-switch
+          v-model="commodityForm.showToC">
+        </el-switch>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="active++">下一步</el-button>
+        <el-button @click="close">取消</el-button>
+      </el-form-item>
+    </div>
+    <!-- 详细信息 -->
+    <div v-show="active === 1">
+      <el-form-item label="商品详情" >
+        <quill-editor ref="shopDetailInfo" :pro_content="commodityForm.fullText"  @contentChange="contentChange"/>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="active--">上一步</el-button>
+        <el-button type="primary" @click="active++">下一步</el-button>
+        <el-button @click="close">取消</el-button>
+      </el-form-item>
+    </div>
+    <div v-show="active === 2">
+      <el-form-item label="注意事项" >
+        <kv-edit :data="commodityForm.attention" @changeData="getKvData"/>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="active--">上一步</el-button>
+        <el-button type="primary" @click="active++">下一步</el-button>
+        <el-button @click="close">取消</el-button>
+      </el-form-item>
+    </div>
+    <div v-show="active === 3">
+      <el-form-item label="风采展示" >
+        <photo-show :data="commodityForm.photoShow" @changeData="getPhotoShowData"/>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="active--">上一步</el-button>
+        <el-button type="primary" @click="submitForm">立即提交</el-button>
+        <el-button @click="close">取消</el-button>
+        <el-checkbox style="float: right;" v-if="isNew && isAuth('/activityTemplate/add')" v-model="saveData">保存为新模板</el-checkbox>
+      </el-form-item>
+    </div>
+  </el-form>
+   <!-- 开启分销的弹窗 -->
+  <el-dialog :title="'分销信息管理'" :close-on-click-modal="false" :visible.sync="openSell" width="650px" append-to-body>
+    <sell-form ref="sellForm" v-if="openSell" @cancel="openSell=false" @success="changeSellData"></sell-form>
+  </el-dialog>
+</div>
+</template>
+<script>
+import SellForm from '../../active/utils/sellForm.vue'
+import { timestamp } from '@/utils/timeChange.js'
+import Upload from '@/views/utils/upload.vue'
+import quillEditor from '@/views/utils/editor'
+import PhotoShow from '@/views/active/utils/PhotoShow'
+import kvEdit from '@/views/active/utils/kvMessage'
+export default {
+  props: {
+    formType: {}
+  },
+  components: {
+    Upload,
+    quillEditor,
+    PhotoShow,
+    kvEdit,
+    SellForm
+  },
+  data() {
+    var trim = (rule, value, callback) => {
+      // if (/\s/.test(value)) {
+      //   callback(new Error('输入内容不能含有空格'))
+      // } else {
+      //   callback()
+      // }
+      callback()
+    }
+    var number = (rule, value, callback) => {
+      if (!/^(([0-9]+\.[0-9]*[1-9][0-9]*)|([0-9]*[1-9][0-9]*\.[0-9]+)|([0-9]*[1-9][0-9]*)|([0-9]*))$/.test(value)) {
+        callback(new Error('请输入正确的数值'))
+      } else {
+        callback()
+      }
+    }
+    var int = (rule, value, callback) => {
+      if (!/^\+?[1-9][0-9]*$/.test(value)) {
+        callback(new Error('请输入正确的整数数值'))
+      } else {
+        callback()
+      }
+    }
+    return {
+      openSell: false,
+      saveData: false,
+      isNew: true,
+      active: 0,
+      width: 316,
+      height: 208,
+      commodityForm: {
+        id: '',
+        price: '',
+        isSell: 0,
+        resellPrice: 0,
+        resellerText:'',
+        resellerPoster: '',
+        sellType: 1,
+        mainImgUrl: '',
+        imgUrlSquare: '',
+        showPrice: '',
+        totalNum: '',
+        name: '',
+        useTime: [],
+        showToC: false,
+        fullText: '',
+        photoShow: '',
+        attention: '',
+        totalCanBuy: 1,
+        moduleGetPrice: '',
+      },
+      dataRule: {
+        name: [
+          { required: true, message: '用户名不能为空', trigger: 'blur' },
+          { validator: trim, trigger: 'blur' }
+        ],
+        totalNum: [
+          { required: true, message: '总数量为必填项', trigger: 'blur' },
+          { validator: int, trigger: 'blur'}
+        ],
+        // showPrice: [
+        //   { required: true, message: '划线金额为必填项', trigger: 'blur' },
+        //   { validator: number, trigger: 'blur'}
+        // ],
+        price: [
+          { required: true, message: '商品价格为必填项', trigger: 'blur' },
+          { validator: number, trigger: 'blur'}
+        ],
+        totalCanBuy: [
+          { required: true, message: '购买数量为必填项', trigger: 'blur' },
+          { validator: number, trigger: 'blur'}
+        ]
+      }
+    }
+  },
+  methods: {
+    // 打开信息
+    sellFromChange() {
+      this.openSell = true
+      this.$nextTick(() => {
+        this.$refs.sellForm.init(this.commodityForm)
+      })
+    },
+    // 修改分销信息
+    changeSellData(data) {
+      this.commodityForm.resellPrice = data.resellPrice
+      this.commodityForm.resellerText = data.resellerText
+      this.commodityForm.resellerPoster = data.resellerPoster
+      this.openSell = false
+    },
+    // 获得风采展示数据
+    getPhotoShowData(data) {
+      this.commodityForm.photoShow = data
+    },
+    // 获得注意事项数据
+    getKvData(data) {
+      this.commodityForm.attention = data
+    },
+    // 富文本
+    contentChange(data) {
+      this.commodityForm.fullText = data
+    },
+    // 修改时初始化修改的数据x
+    init({ data }) {
+      this.commodityForm.id = data.activityId
+      const url = this.apiList.shop.commodity.detail
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ id: data.activityId }, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.commodityForm.totalCanBuy = data.data.totalCanBuy
+          this.commodityForm.sellType = data.data.sellType
+           // 分销价格信息
+          // if (data.data.resellPrice) {
+            // this.commodityForm.isSell = 1
+            this.commodityForm.resellPrice = data.data.resellPrice/100
+            this.commodityForm.resellerText = data.data.resellerText
+            this.commodityForm.resellerPoster = data.data.resellerPoster
+          // }
+          this.commodityForm.moduleGetPrice = data.data.moduleGetPrice > 0 ? data.data.moduleGetPrice / 100 : Math.round(data.data.price * Number(this.$cookie.get('moduleGetPrice')) * 100) / 10000
+          this.commodityForm.name = data.data.name
+          this.commodityForm.price = data.data.price / 100
+          this.commodityForm.totalNum = data.data.totalNum
+          this.commodityForm.mainImgUrl = data.data.imgUrl
+          this.commodityForm.imgUrlSquare = data.data.imgUrlSquare
+          this.commodityForm.showToC = data.data.showToC
+          this.commodityForm.fullText = data.data.fullText ? data.data.fullText : ''
+          const attentionArr = []
+            // 将注意事项转换成对应的值
+          const attention = data.data.attention && data.data.attention.length > 0 ? data.data.attention : []
+          attention.forEach( element => {
+            attentionArr.push({
+              id: element.id,
+              noteKey: element.noteKey,
+              noteValue: element.noteValue
+            })
+          })
+          this.commodityForm.attention = JSON.stringify(attentionArr)
+          // 将风采展示转换成对应的值
+          const photoShowArr = []
+          const photoShow = data.data.photoShow && data.data.photoShow.length > 0 ? data.data.photoShow : []
+          photoShow.forEach( element => {
+            photoShowArr.push({
+              id: element.id,
+              url: element.imgUrl
+            })
+          })
+          this.commodityForm.photoShow = JSON.stringify(photoShowArr)
+        }
+      })
+    },
+    // 将模板的值赋给对应的参数
+    setData(data) {
+      this.commodityForm.name = data.name
+      this.commodityForm.price = data.price / 100
+      this.commodityForm.totalNum = data.totalNum
+      this.commodityForm.moduleGetPrice = data.moduleGetPrice > 0 ? data.moduleGetPrice / 100 : data.moduleGetPrice
+      this.commodityForm.mainImgUrl = data.mainImgUrl
+      this.commodityForm.imgUrlSquare = data.imgUrlSquare
+      this.commodityForm.showToC = data.showToC
+      this.commodityForm.fullText = data.fullText ? data.fullText : ''
+      this.commodityForm.attention = data.attention
+      this.commodityForm.photoShow = data.photoShow
+      this.commodityForm.sellType = data.sellType ? data.sellType : 1
+      // 分销价格信息
+      if (data.resellPrice) {
+        this.$confirm('该模板包含分销信息，是否使用模板的分销信息?', '提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'danger' }
+        ).then(() => {
+          this.commodityForm.resellPrice = data.resellPrice/100
+          this.commodityForm.resellerText = data.resellerText
+          this.commodityForm.resellerPoster = data.resellerPoster
+        })
+      }
+    },
+    // 提交表单
+    submitForm() {
+      this.active ++
+      this.$refs['commodityForm'].validate((valid) => {
+        let url = this.apiList.shop.commodity.add
+        if (this.formType === 'edit') {
+          url = this.apiList.shop.commodity.edit
+        }
+        if (valid) {
+          const submitData = JSON.parse(JSON.stringify(this.commodityForm))
+          // submitData.showPrice = this.commodityForm.showPrice * 100
+          if (this.commodityForm.isSell && submitData.resellPrice==0) {
+            return this.$message({
+              message: '您开启了分销但是未填写分销信息'
+            })
+          }
+          if (submitData.resellPrice) {
+            if (submitData.resellPrice&&submitData.resellPrice> submitData.price) {
+              return this.$message({
+                message: '分销金额不能超过商品金额'
+              })
+            }
+            submitData.resellPrice = Math.round(submitData.resellPrice*100)
+          }
+          submitData.price = Math.round(this.commodityForm.price * 100)
+          submitData.moduleGetPrice = submitData.moduleGetPrice >= 0 ? submitData.moduleGetPrice * 100 : -1
+          this.$http({
+            url: this.$http.adornUrl(url),
+            method: 'post',
+            data: this.$http.adornData(submitData, url, true)
+          }).then(({ data }) => {
+            if (this.saveData) {
+              const url = this.apiList.shop.template.add
+              const formData = submitData
+              formData.type = 601
+              this.$http({
+                url: this.$http.adornUrl(url),
+                method: 'post',
+                data: this.$http.adornData(formData, url, true)
+              }).then(({ data }) => {
+                if (data.result) {
+                  this.$message({ type: 'success', message: '提交成功' })
+                  this.$emit('success')
+                } else {
+                  this.$emit('close')
+                }
+              })
+            } else {
+              if (data.result) {
+                this.$message({ type: 'success', message: '提交成功' })
+                this.$emit('success')
+              } else {
+                this.$emit('close')
+              }
+            }
+          })
+        } else {
+          // 做正则判断
+          if(!this.commodityForm.price) {
+            this.$message({
+              message:'您还未设置价格',
+              type: 'info'
+            })
+            this.active = 0
+            return
+          }
+          if(!this.commodityForm.totalNum) {
+            this.$message({
+              message:'您还未设置总数量',
+              type: 'info'
+            })
+            this.active = 0
+            return
+          }
+          if(!this.commodityForm.name) {
+            this.$message({
+              message:'您还未设置名称',
+              type: 'info'
+            })
+            this.active = 0
+            return
+          }
+        }
+      })
+    },
+    // 选择图片
+    chooseImg(data) {
+      this.commodityForm.mainImgUrl = data
+    },
+    chooseImg_imgUrlSquare(data) {
+      this.commodityForm.imgUrlSquare = data
+    },
+    close() {
+      this.$emit('close')
+    }
+  },
+  mounted() {
+  }
+}
+</script>
+<style lang="scss">
+.commodityForm{
+  .update {
+    width: 158px;
+    height: 104px;
+    line-height: 104px;
+  }
+  .avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar-uploader .el-upload:hover {
+    border-color: #409EFF;
+  }
+  .avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 178px;
+    height: 178px;
+    line-height: 178px;
+    text-align: center;
+  }
+  .avatar {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+}
+</style>

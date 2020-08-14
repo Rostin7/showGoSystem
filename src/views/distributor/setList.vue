@@ -1,0 +1,169 @@
+<template>
+  <div class="enterName">
+    <el-row :gutter="15">
+      <el-col :span="24">
+        <el-card shadow="never">
+          <el-form @submit.native.prevent :inline="true">
+            <el-form-item>
+              <p class="main_header">分销商设置列表</p>
+            </el-form-item>
+            <el-form-item style="float: right">
+              <el-button type="text" @click="getDataList"><svg-icon icon-class="search"/></el-button>
+            </el-form-item>
+            <el-form-item style="float: right" label="请输入分销商电话号码">
+              <el-input
+                placeholder="请输入分销商电话号码"
+                v-model="searchName"
+                @keydown.enter.prevent.native="getDataList"
+                @clear="getDataList"
+                clearable>
+              </el-input>
+            </el-form-item>
+          </el-form>
+          <el-table :data="tableList" v-loading="listLoading" element-loading-text="拼命加载中">
+            <el-table-column header-align="center" align="center" prop="id" label="Id" width="60"/>
+            <el-table-column header-align="center" align="center" prop="realName" label="姓名" />
+            <el-table-column header-align="center" align="center" prop="nickName" label="微信昵称" />
+            <el-table-column header-align="center" align="center" prop="phoneNum" label="电话" />
+            <el-table-column header-align="center" align="center" prop="fatherId" label="分销上级">
+              <template slot-scope="scope" width="60">
+                {{ scope.row.fatherId !== 0 ? `${scope.row.fatherRealName}(${scope.row.fatherId})` : '平台' }}
+              </template>
+            </el-table-column>
+            <el-table-column header-align="center" align="center" prop="fatherNickName" label="上级昵称" />
+            <el-table-column header-align="center" align="center" prop="fatherCount" label="上级抽成">
+
+            </el-table-column>
+            <!-- <el-table-column header-align="center" align="center" prop="firstCount" label="分销商抽成"></el-table-column> -->
+            <el-table-column header-align="center" align="center" prop="num" label="分销商头像">
+              <template slot-scope="scope" width="60">
+                <img :src="scope.row.avatar" style="width: 45px; height: 45px; border-radius: 100%">
+              </template>
+            </el-table-column>
+            <el-table-column header-align="center" align="center" prop="createdAt" label="申请时间" />
+            <el-table-column label="操作" align="center" header-align="center">
+              <template slot-scope="scope">
+               <router-link :to="'/setListSecond/'+scope.row.id">
+                  <el-button
+                    size="mini"
+                    type="text"
+                  >查看下级</el-button>
+                </router-link>
+                <el-button
+                  size="mini"
+                  type="text"
+                  v-if="isAuth('/reseller/modRealName')"
+                  @click="changeName(scope.row)">修改姓名
+                </el-button>
+                <el-button
+                  size="mini"
+                  type="text"
+                  v-if="isAuth('/reseller/setRateCount')"
+                  @click="changeData(scope.row)">提成修改
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <!--工具条-->
+          <el-pagination
+            layout="total, prev, pager, next"
+            background
+            :page-size="pageSize"
+            :total="total"
+            style="text-align:center;"
+            @current-change="handleCurrentChange"
+          />
+        </el-card>
+      </el-col>
+    </el-row>
+    <el-dialog :title="'设置分享权限'" :visible.sync="dialogTableVisible" width="600px">
+      <set-form ref="setForm" v-if="dialogTableVisible" @success="success" @cancel="dialogTableVisible = false"/>
+    </el-dialog>
+  </div>
+</template>
+<script>
+import setForm from './setForm'
+export default {
+  data() {
+    return {
+      tableList: [],
+      listLoading: true,
+      total: 0,
+      page: 1,
+      dialogTableVisible: false,
+      pageSize: 10,
+      chooseId: '',
+      searchName: ''
+    }
+  },
+  components: {
+    setForm
+  },
+  methods: {
+    changeName(data) {
+      this.$prompt('请输入分销商姓名', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+      }).then(({ value }) => {
+        const url = this.apiList.reseller.changeName
+        this.$http({
+          url: this.$http.adornUrl(url),
+          method: 'post',
+          data: this.$http.adornData({ name: value, resellerId: data.id}, url, true)
+        }).then(({ data }) => {
+          if(data.result) {
+            this.getDataList()
+          }
+        })
+      })
+    },
+    getDataList() {
+      this.listLoading = true
+      const url = this.apiList.reseller.listNext
+      let formData = {
+        page: this.page,
+        size: this.pageSize
+      }
+      if(this.searchName) {
+        formData.searchPhoneNum = this.searchName
+      }
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData(formData, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.tableList = data.data.records
+          this.total = data.data.total
+        }
+        this.listLoading = false
+      }).catch(() => {
+        // this.$message.error('未知错误')
+        this.listLoading = false
+      })
+    },
+    // 分页组件切换
+    handleCurrentChange(value) {
+      this.page = value
+      this.getDataList()
+    },
+    // 修改提成
+    changeData(data) {
+      this.dialogTableVisible = true
+      this.$nextTick(() => {
+        this.$refs.setForm.init(data)
+      })
+    },
+    success() {
+      this.dialogTableVisible = false
+      this.getDataList()
+    }
+  },
+  created() {
+    this.getDataList()
+  }
+}
+</script>
+<style>
+
+</style>

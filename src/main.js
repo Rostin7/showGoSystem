@@ -1,0 +1,92 @@
+import Vue from 'vue'
+import VueCookie from 'vue-cookie'
+import Cookies from 'js-cookie'
+import 'normalize.css/normalize.css' // a modern alternative to CSS resets
+import Element from 'element-ui'
+import './styles/element-variables.scss'
+import '@/styles/index.scss' // global css
+import App from './App'
+import store from './store'
+import router from './router'
+import './icons' // icon
+import './permission' // permission control
+import './utils/error-log' // error log
+import VueCropper from 'vue-cropper'
+import * as filters from './filters' // global filters
+import apiList from '@/utils/apiList'
+import { isAuth } from '@/utils/isAuth'
+import { timeChange } from '@/utils'
+import BaiduMap from 'vue-baidu-map'
+import { mockXHR } from '../mock'
+import httpRequest from '@/utils/httpRequest'
+import VueAwesomeSwiper from 'vue-awesome-swiper'
+import CustomForeach from '@/utils/customForeach'
+Vue.use(VueAwesomeSwiper)
+if (process.env.NODE_ENV === 'production') {
+  mockXHR()
+}
+// 使用富文本编辑器
+import VueHtml5Editor from 'vue-html5-editor'
+const editoptions = {
+  name: 'vue-html5-editor',
+  showModuleName: true,
+  language: 'zh-cn',
+  image: {
+    sizeLimit: 1024 * 1024,
+    upload: {
+      url: apiList.baseUrl + apiList.upload_full,
+      fieldName: 'file'
+    },
+    compress: {
+      width: document.documentElement.offsetWidth - 20 / 750 * document.documentElement.offsetWidth * 3.2 - 20,
+      height: 355,
+      quality: 100
+    },
+    // 上传返回处理
+    uploadHandler(res) {
+      const data = JSON.parse(res)
+      return data.data
+    }
+  },
+  // 自定义显示模块
+  visibleModules: [
+    'text',
+    'color',
+    'font',
+    'align',
+    'list',
+    'link',
+    'unlink',
+    'tabulation',
+    'image',
+    'hr',
+    'eraser',
+    'undo'
+  ]
+}
+Vue.use(VueHtml5Editor, editoptions)
+// 使用裁剪
+Vue.use(VueCropper)
+Vue.use(VueCookie)
+Vue.use(Element, {
+  size: Cookies.get('size') || 'medium' // set element-ui default size
+})
+Vue.use(BaiduMap, {
+  ak: '57aw6AtBaydVkb5N3k4zOSU8wV3OtbEO'
+})
+// register global utility filters
+Object.keys(filters).forEach(key => {
+  Vue.filter(key, filters[key])
+})
+Vue.config.productionTip = false
+Vue.prototype.$http = httpRequest
+Vue.prototype.apiList = apiList
+Vue.prototype.isAuth = isAuth
+Vue.prototype.timeChange = timeChange
+Vue.prototype.$customForeach = CustomForeach
+new Vue({
+  el: '#app',
+  router,
+  store,
+  render: h => h(App)
+})

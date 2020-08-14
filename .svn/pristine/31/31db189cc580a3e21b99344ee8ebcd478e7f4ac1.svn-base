@@ -1,0 +1,236 @@
+<template>
+  <div class="pmSaleDataName">
+    <el-card shadow="hover">
+      <el-form @submit.native.prevent :inline="true" class="demo-form-inline">
+        <el-form-item>
+          <el-button @click="goBack" type='text'><i class="el-icon-d-arrow-left"/>返回上一级</el-button>
+        </el-form-item>
+        <el-form-item style="margin-bottom: 0;margin-left: 23px;"><p class="main_header">{{ activeName }}</p></el-form-item>
+      </el-form>
+      <el-table 
+        :data="tableList" 
+        v-loading="listLoading" 
+        element-loading-text="拼命加载中"
+      >
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="id" label="序号" width="60" align="center" header-align="center" />
+        <el-table-column prop="userNickName" label="昵称" align="center" header-align="center" >
+          <template slot-scope="scope">
+            {{ scope.row.userEntity.name ? scope.row.userEntity.name : defultUserName }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="name" label="头像" align="center" header-align="center">
+          <template slot-scope="scope">
+            <img class="userAvatar" :src="scope.row.userEntity.userAvatar ? scope.row.userEntity.userAvatar : defultUserAvatar" alt="">
+          </template>
+        </el-table-column>
+        <el-table-column prop="content" label="评论详情" align="center" header-align="center"/>
+        <el-table-column prop="replyNum" label="回复数量" align="center" header-align="center" width="200"/>
+        <el-table-column label="操作" width="200" header-align="center" align="center">
+          <template slot-scope="scope">
+            <!-- 查看详情 -->
+            <router-link v-if="isAuth('/zComment/findReply')" :to="'/zCommentReply/'+scope.row.id">
+              <el-button
+                size="mini"
+                type="text"
+              >查看详情</el-button>
+            </router-link>
+            <el-button
+              v-if="isAuth('/zComment/deleteCommentA')"
+              size="mini"
+              type="text"
+              class="danger"
+              @click="submitDelete(scope.$index, scope.row)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-pagination
+        layout="total, prev, pager, next"
+        background
+        :page-size="pageSize"
+        :total="total"
+        style="text-align:center;"
+        @current-change="handleCurrentChange"
+      />
+    </el-card>
+  
+  </div>
+</template>
+<script>
+export default {
+  data() {
+    return {
+      dialogFormVisible: false,
+      dataList: [],
+      activityId: '',
+      activityType: '',
+      listLoading: false,
+      tableList: [],
+      activeName: '',
+      multipleSelection: [],
+      pageSize: 10,
+      total: 0,
+      page: 1,
+      useState: '',
+      filterState: '筛选',
+      defultUserAvatar: require('../../assets/default.png'),
+      defultUserName: '众享乐用户'
+    }
+  },
+  methods: {
+    goBack() {
+      window.history.go(-1)
+    },   
+    init (val, type) {
+      this.activityId = val
+      this.activityType = type
+      this.getOrderInfo()
+      this.getDataList()
+    },
+    // 点击删除
+    submitDelete(index, data) {
+      // 点击确认删除
+      this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'danger' }
+      ).then(() => {
+        const url = this.apiList.zComment.delAll
+        this.$http({
+          url: this.$http.adornUrl(url),
+          method: 'post',
+          data: this.$http.adornData({ commentId: data.id }, url, true)
+        }).then(({ data }) => {
+          if (data.result) {
+            this.$message({ type: 'success', message: '删除成功' })
+            // 删除当前列表
+            this.tableList.splice(index, 1)
+            this.total --
+          }
+        })
+      })
+    },
+    getOrderInfo() {
+      let url = this.apiList.shop.pmSale.detail
+      switch (this.activityType) {
+        case 301:
+          url = this.apiList.shop.pmSale.detail
+          break
+        case 101:
+          url = this.apiList.shop.enterName.detail
+          break
+      }
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ id: this.activityId }, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.activeName = data.data.name
+        } else {
+        }
+        this.listLoading = false
+      }).catch(() => {
+        this.listLoading = false
+      })
+    },
+    getDataList() {
+      this.listLoading = true
+      const url = this.apiList.zComment.list
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ targetActivityId: this.activityId, targetActivityType: this.activityType, page: this. page, size: this.pageSize }, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.tableList = data.data.records
+          this.total = data.data.total
+        } else {
+          // 请求失败
+          // this.$message.error(data.msg)
+        }
+        this.listLoading = false
+      }).catch(() => {
+        
+        this.listLoading = false
+      })
+    },
+    handleCurrentChange(value) {
+      this.page = value
+      this.getDataList()
+    },
+  },
+  created() {
+    const url = window.location.href
+    let id = []
+    if (url.indexOf('/') > -1) {
+      id = url.split('/')
+    }
+    if (id && id.length) {
+      this.init(id[id.length -2 ],id[id.length -1 ])
+    } else {
+      this.$message({
+        message: '非法路径',
+        type: 'waring'
+      })
+      setTimeout(() => {
+        this.goBack()
+      }, 1000)
+    }
+  }
+}
+</script>
+<style lang="scss">
+.pmSaleDataName{
+  .el-dialog{
+    border-radius: 10px;
+    .el-dialog__header{
+      border-radius: 10px 10px 0 0;
+      background: #E8F1FF;
+      .dialogTitle{
+        color: #5F8FD9;
+        font-size: 18px;
+      }
+    }
+    .el-dialog__body{
+      padding: 60px 80px;
+    }
+    .dialogBody{
+      width: 100%;
+      box-sizing: border-box;
+      text-align: left;
+      border-bottom: solid 1px #D7D7D7;
+      p{
+        width: 100%;
+        margin: 0;
+        // height: 58px;
+        font-size: 18px;
+        line-height: 58px;
+        border-top: solid 1px #D7D7D7;
+        span{
+          width: 200px;
+          padding-left: 15px;
+          font-weight: 600;
+          display: inline-block;
+          vertical-align: top;
+          height: 100%;
+        }
+        span:nth-child(2){
+          width: auto;
+          max-width: 150px;
+          font-weight: 400;
+          vertical-align: bottom;
+        }
+      }
+    }
+    .dialogFooter{
+      width: 108px;
+      height: 38px;
+      line-height: 38px;
+      margin: auto;
+      text-align: center;
+      background: #4F93FE;
+      color: #fff;
+      border-radius: 38px;
+      cursor: pointer;
+    }
+  }
+}
+</style>

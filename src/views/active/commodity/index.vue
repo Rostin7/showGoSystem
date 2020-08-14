@@ -1,0 +1,232 @@
+<template>
+  <div class="commodity">
+    <el-row :gutter="15">
+      <el-col :span="24">
+        <el-card shadow="never">
+          <!-- 改变店铺 -->
+          <el-form :inline="true" @submit.native.prevent class="demo-form-inline">
+            <el-form-item style="margin-bottom: 0"><p class="main_header">商品管理</p></el-form-item>
+            <el-form-item>
+              <el-button @click.native="addTypeChoose = true" v-if="isAuth('/product/add')"><i class="el-icon-plus"></i></el-button>
+            </el-form-item>
+          </el-form>
+          <el-table :data="tableList" v-loading="listLoading" element-loading-text="拼命加载中">
+            <el-table-column prop="activityId" label="Id" width="80" align="center" header-align="center" />
+            <el-table-column prop="name" label="名称" align="center" header-align="center"/>
+            <el-table-column prop="showToC" label="状态" align="center" header-align="center">
+              <template slot-scope="scope">
+                <check
+                  :approvalId="scope.row.approvalId"
+                  :sysDown="scope.row.sysDown"
+                  :show="scope.row.showToC"
+                  :activityId="scope.row.activityId"
+                  :activityType="601"
+                  @changeData="getDataList"/>
+                </template>
+            </el-table-column>
+            <el-table-column prop="showToC" label="微信分享信息" align="center" header-align="center" v-if="isAuth('/wxTool/getMiniUnlimitedCode')">
+              <template slot-scope="scope">
+                <wx-code 
+                :img="scope.row.wxMiniUrl" 
+                :code="scope.row.wxMiniUrlCode" 
+                :targetId="scope.row.activityId" 
+                :type="601"
+                @getminiAppUrl="getminiAppUrl"
+                @getWxAppEr="getWxAppEr"></wx-code>
+              </template>
+            </el-table-column>
+            <el-table-column prop="imgUrl" label="主图" align="center" header-align="center" width="200">
+              <template slot-scope="scope">
+                <img :src="scope.row.imgUrl" alt="" style="max-width: 100%;">
+              </template>
+            </el-table-column>
+            <el-table-column prop="showToC" label="售价" align="center" header-align="center">
+              <template slot-scope="scope">
+                {{scope.row.price/100}}
+              </template>
+            </el-table-column>
+            <el-table-column prop="totalNum" label="最大数量" align="center" header-align="center"/>
+            <el-table-column label="操作" align="center" header-align="center">
+              <template slot-scope="scope">
+                <router-link :to="'/commodityOrderInfo/'+scope.row.activityId">
+                <!-- <router-link v-if="isAuth('/product/listOrderData')" :to="'/commodityOrderInfo/'+scope.row.activityId"> -->
+                  <el-button
+                    size="mini"
+                    type="text"
+                  >订单管理</el-button>
+                </router-link>
+                <el-button
+                  size="mini"
+                  type="text"
+                  v-if="isAuth('/product/mod')"
+                  @click="submitEdit(scope.$index, scope.row)">修改</el-button>
+                <el-button
+                  v-if="isAuth('/product/del')"
+                  size="mini"
+                  type="text"
+                  class="danger"
+                  @click="submitDelete(scope.$index, scope.row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <!--工具条-->
+          <el-pagination
+            layout="total, prev, pager, next"
+            background
+            :page-size="pageSize"
+            :total="total"
+            style="text-align:center;"
+            @current-change="handleCurrentChange"
+          />
+        </el-card>
+      </el-col>
+    </el-row>
+    <el-dialog :title="dialogTitle" :visible.sync="dialogFormVisible" :modal="true"  width="600">
+      <commodity-form v-if="dialogFormVisible" ref="commodityForm" :formType="formType" @success="success" @close="dialogFormVisible = !dialogFormVisible"></commodity-form>
+    </el-dialog>
+    <el-dialog title="添加商品" :visible.sync="addTypeChoose" :close-on-click-modal="false" :modal="true"  width="600px">
+      <active-template :activeType="601" v-if="addTypeChoose" @addModel="addModel" @getModuleData="getModuleData" @close="addTypeChoose = !addTypeChoose"/>
+    </el-dialog>
+  </div>
+</template>
+<script>
+import commodityForm from './form.vue'
+import { eventBus } from '@/eventBus'
+import ActiveTemplate from '@/views/active/utils/template'
+import check from '../utils/check'
+import WxCode from '../utils/wCode'
+export default {
+  data() {
+    return {
+      isadmin: false,
+      pass: '',
+      addTypeChoose: false,
+      tableList: [],
+      listLoading: true,
+      isShowEditVisible: false,
+      reloadShopList: false,
+      chooseActivityId: 0,
+      dialogPhotoshowVisible: false,
+      dialogKVVisible: false,
+      total: 0,
+      page: 1,
+      pageSize: 10,
+      DialogImgVisible: false,
+      imgUrl: '',
+      dialogTitle: '添加商品',
+      dialogFormVisible: false,
+      formType: 'add'
+    }
+  },
+  components: {
+    commodityForm,
+    ActiveTemplate,
+    check,
+    WxCode
+  },
+  methods: {
+    getDataList() {
+      this.listLoading = true
+      this.$http({
+        url: this.$http.adornUrl(this.apiList.shop.commodity.list),
+        method: 'post',
+        data: this.$http.adornData({ page: this.page, size: this.pageSize }, this.apiList.shop.commodity.list, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.tableList = data.data.records
+          this.total = data.data.total
+        } else {
+          // 请求失败
+          // this.$message.error(data.msg)
+        }
+        this.listLoading = false
+      }).catch(() => {
+        // this.$message.error('未知错误')
+        this.listLoading = false
+      })
+    },
+    // 获得小程序分享链接后提交修改
+    getminiAppUrl(data) {
+      const url = this.apiList.shop.commodity.edit
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ id: data.targetId, wxMiniUrlCode: data.code }, url, true)
+      })
+    },
+    getWxAppEr(data) {
+      const url = this.apiList.shop.commodity.edit
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ id: data.targetId, wxMiniUrl: data.code }, url, true)
+      })
+    },
+    // 点击删除
+    submitDelete(index, data) {
+      // 点击确认删除
+      this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'danger' }
+      ).then(() => {
+        this.$http({
+          url: this.$http.adornUrl(this.apiList.shop.commodity.del),
+          method: 'post',
+          data: this.$http.adornData({ id: data.activityId }, this.apiList.shop.commodity.del, true)
+        }).then(({ data }) => {
+          if (data.result) {
+            // 删除成功
+            this.$message({ type: 'success', message: '删除成功' })
+            // 删除当前列表
+            this.tableList.splice(index, 1)
+            this.total --
+          }
+        })
+      }).catch(() => {
+        // this.$message.error('未知错误')
+      })
+    },
+    // 点击添加
+    addModel(index, data) {
+      this.formType = 'add'
+      this.dialogTitle = '添加商品'
+      this.dialogFormVisible = true
+    },
+    // 点击修改
+    submitEdit(index, data) {
+      this.formType = 'edit'
+      this.dialogTitle = '修改商品'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs.commodityForm.init({ data })
+      })
+    },
+    success() {
+      this.dialogFormVisible = false
+      this.getDataList()
+    },
+    // 分页组件切换
+    handleCurrentChange(value) {
+      this.page = value
+      this.getDataList()
+    },
+    // 提交模板数据
+    getModuleData(data) {
+      this.formType = 'add'
+      this.dialogTitle = '添加促销活动'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs.commodityForm.setData(data)
+      })
+    }
+  },
+  created() {
+    this.getDataList()
+  }
+}
+</script>
+<style lang="scss">
+.commodity{
+  .el-dialog__body{
+    padding-top: 15px;
+  }
+}
+</style>

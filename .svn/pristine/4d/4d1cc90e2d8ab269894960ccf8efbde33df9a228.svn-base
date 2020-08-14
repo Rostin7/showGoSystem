@@ -1,0 +1,580 @@
+const api = {}
+// 文件上传
+api.upload = '/res/upFile'
+api.uploadOnline = '/res/upOnlineFile'
+api.moduleGetPrice = '/money/getModuleChou'
+api.role = {
+  list: '/role/list',
+  add: '/role/add',
+  del: '/role/del',
+  edit: '/role/mod',
+  getByNoType: '/moduleUser/listModuleUserNoRole', // 商户无角色职工列表包括角色名
+  getByRoleId: '/moduleUser/listModuleUserByRoleId', // 商户某角色职工列表包括角色名称
+  user: {
+    link: '/userRole/link', // 绑定用户角色
+    breakLink: '/userRole/breakLink', // 解绑用户角色
+    edit: '/user/modNickName' // 修改用户昵称
+  },
+  moduleUser: { // 员工管理
+    list: '/moduleUser/listModuleUser',
+    getCode: '/moduleUser/sendLinkUserSms', // 获得短信验证码
+    del: '/moduleUser/breakUser',
+    add: '/moduleUser/linkUser' // 根据手机号添加员工
+  },
+  api: { // 权限接口
+    list: '/api/listRoleApi',
+    add: '/roleApi/add',
+    del: '/roleApi/del',
+    edit: '/roleApi/update'
+  }
+}
+api.login = {
+  getKey: '/rsa/publicKey',
+  pass: '/userLogin/loginByPwd',
+  menu: '/menu/getMenu',
+  loginByPhone: '/userLogin/loginBySmsCode',
+  getVsCode: '/userLogin/sendLoginSmsCode',
+  detail: '/user/getUserRoleInfo',
+  hadPwd: '/user/hadPwd',
+  passManager: '/user/modPwd',
+  changNickName: '/user/modNickName',
+  reset: '/user/resetPwdByPhone' // 忘记密码
+}
+// 模块白名单管理
+api.config = {
+  api: '/api/listAll', // 获取所有接口
+  listKey: '/apiAuth/listAllKeys', // 模块列表
+  detailKey: '/apiAuth/getInfoByKey', // 模块详情
+  delKey: '/apiAuth/delKey', // 删除模块
+  addKey: '/apiAuth/addRightIp', // 添加模块白名单
+  // 商场分类管理
+  mallGroup: { 
+    add: '/mallGroup/add',
+    del: '/mallGroup/del',
+    list: '/mallGroup/listNext',
+    listNextAll: '/mallGroup/listNextAll'
+  },
+  // 儿童分类
+  childShopGroup: {
+    add: '/childShopGroup/add',
+    del: '/childShopGroup/del',
+    list: '/childShopGroup/listNext',
+    listNextAll: '/childShopGroup/listNextAll'
+  },
+  // 美妆分类
+  makeupGroup: {
+    add: '/makeUpGroup/add',
+    del: '/makeUpGroup/del',
+    list: '/makeUpGroup/listNext',
+    listNextAll: '/makeUpGroup/listNextAll'
+  },
+  // 宠物分类
+  pets: {
+    add: '/petsGroup/add',
+    del: '/petsGroup/del',
+    list: '/petsGroup/listNext',
+    listNextAll: '/petsGroup/listNextAll'
+  },
+  // 其他分类
+  other: {
+    add: '/otherShopGroup/add',
+    del: '/otherShopGroup/del',
+    list: '/otherShopGroup/listNext',
+    listNextAll: '/otherShopGroup/listNextAll'
+  },
+  // 美食分类
+  food: {
+    add: '/foodShopGroup/add',
+    del: '/foodShopGroup/del',
+    list: '/foodShopGroup/listNext',
+    listNextAll: '/foodShopGroup/listNextAll'
+  },
+  // 娱乐分类
+  fun: {
+    add: '/funShopGroup/add',
+    del: '/funShopGroup/del',
+    list: '/funShopGroup/listNext',
+    listNextAll: '/funShopGroup/listNextAll'
+  },
+  // 旅游分类
+  tour: {
+    add: '/tourShopGroup/add',
+    del: '/tourShopGroup/del',
+    list: '/tourShopGroup/listNext',
+    listNextAll: '/tourShopGroup/listNextAll'
+  },
+  // 大牌分类
+  bigPaiGroup: {
+    add: '/bigPaiGroup/add',
+    del: '/bigPaiGroup/del',
+    list: '/bigPaiGroup/listNext',
+    listNextAll: '/bigPaiGroup/listNextAll'
+  },
+  // 电商分类
+  shopOlGroup: {
+    add: '/shopOlGroup/add',
+    del: '/shopOlGroup/del',
+    list: '/shopOlGroup/listNext',
+    listNextAll: '/shopOlGroup/listNextAll'
+  },
+  // 年货分类
+  nianHuoGroup: {
+    add: '/nianHuoGroup/add',
+    del: '/nianHuoGroup/del',
+    list: '/nianHuoGroup/listNext',
+    listNextAll: '/nianHuoGroup/listNextAll'
+  },
+  // 版本更新分类
+  app: {
+    add: '/appUpdate/add',
+    del: '/appUpdate/del',
+    edit: '/appUpdate/mod',
+    list: '/appUpdate/list',
+    // 版本列表操作
+    version: {
+      add: '/versions/add',
+      detail: '/versions/findByVersionCode',
+      check: '/versions/update',
+      list: '/versions/find',
+    }
+  }
+}
+// 模块类型管理
+api.moduleType = {
+  list: '/moduleType/list',
+  add: '/moduleType/add',
+  del: '/moduleType/del',
+  edit: '/moduleType/mod'
+}
+// 根据接口获得对应的分组，已弃用
+api.moduleGroups = {
+  mallType: '/moduleShop/listMallGroup', // 所属商场分类
+  childType: '/moduleShop/listChildGroup', // 获取店铺儿童分类列表
+  makeUpType: '/moduleShop/listMakeUpGroup', // 获得美妆分类
+  petsType: '/moduleShop/listPetsGroup', // 获得宠物分类
+  otherType: '/moduleShop/listOtherGroup', // 获得其他分类
+}
+api.rooter = {
+  creat: '/rootUser/createRoot' // 创建最高管理员
+}
+api.admin = {
+  creat: '/rootUser/createRoot' // 创建最高管理员
+}
+// 标签管理
+api.tag = {
+  list: '/shopTag/list',
+  add: '/shopTag/add',
+  del: '/shopTag/del',
+  edit: '/shopTag/mod'
+}
+// 城市及B端管理
+api.module = {
+  city: {
+    add: '/moduleCity/add',
+    del: '/moduleCity/del',
+    list: '/moduleCity/listNext',
+    listNextAll: '/moduleCity/listNextAll',
+    detail: '/moduleCity/getById',
+    edit: '/moduleCity/mod',
+    // 城市轮播图
+    banner: {
+      list: '/groupBanner/listAll',
+      add: '/groupBanner/add',
+      del: '/groupBanner/del',
+      edit: '/groupBanner/mod',
+      sort: '/groupBanner/sort'
+    },
+    // 城市推荐活动和店铺
+    hotActivity: {
+      getSelect: '/hotActivity/listActivitysByCityId', // 选项
+      add: '/hotActivity/add',
+      del: '/hotActivity/del',
+      list: '/hotActivity/list',
+      sort: '/hotActivity/sort'
+    },
+    hotShop: {
+      list: '/hotShop/groupList',
+      getSelect: '/hotShop/listShopByCityId', // 选项
+      add: '/hotShop/groupAdd',
+      del: '/hotShop/groupDel'
+    }
+  },
+  // 商场管理
+  moduleMall: {
+    add: '/moduleMall/add',
+    del: '/moduleMall/del',
+    edit: '/moduleMall/mod',
+    editSelf: '/moduleMall/modSelf',
+    detail: '/moduleMall/getById',
+    listAll: '/moduleMall/list',
+    list: '/moduleMall/listByPage',
+    hotShop: {
+      list: '/hotShop/list',
+      getSelect: '/hotShop/listShopByMallId', // 选项
+      add: '/hotShop/mallAdd',
+      del: '/hotShop/mallDel'
+    },
+    news: {
+      list: '/mallNews/list',
+      edit: '/mallNews/mod', // 选项
+      add: '/mallNews/add',
+      del: '/mallNews/del'
+    }
+  },
+  // 店铺管理
+  moduleShop: {
+    add: '/moduleShop/add',
+    del: '/moduleShop/del',
+    edit: '/moduleShop/mod',
+    editSelf: '/moduleShop/modSelf',
+    listAll: '/moduleShop/list',
+    list: '/moduleShop/listByPage',
+    getDetail: '/moduleShop/getById',
+    listMall: '/moduleShop/listMall', // 获得商场列表
+    mallType: '/moduleShop/listMallGroup', // 所属商场分类
+    childType: '/moduleShop/listChildGroup', // 获取店铺儿童分类列表
+    makeUpType: '/moduleShop/listMakeUpGroup', // 获得美妆分类
+    petsType: '/moduleShop/listPetsGroup', // 获得宠物分类
+    otherType: '/moduleShop/listOtherGroup', // 获得其他分类
+    tags: '/shopTag/listNameAll'
+  },
+  // 活动管理（活动模列表糊筛选）
+  active: {
+    list: '/groupBanner/searchActivity'
+  }
+}
+api.moduleTypeApi = {
+  add: '/moduleTypeApi/add',
+  del: '/moduleTypeApi/del',
+  list: '/api/listModuleTypeApi',
+  show: '/moduleTypeApi/changeShow'
+}
+// 审批管理
+api.showToCApproval = {
+  list: '/showToCApproval/list',
+  check: '/showToCApproval/deal'
+}
+// 店铺信息管理及活动管理
+api.shop = {
+  setAuthCode: '/payKey/setAuthCode',
+  // 提交审批的接口。所有活动使用type区分
+  check: '/showToCApproval/showToC',
+  // 取消审批的接口
+  cancel: '/showToCApproval/cancel',
+  // 风采展示
+  photoShow: {
+    add: '/shopPhotoShow/add',
+    list: '/shopPhotoShow/listByTypeAndTargetId',
+    del: '/shopPhotoShow/del'
+  },
+  // 店铺资质
+  shopQualifiedShow: {
+    add: '/shopQualifiedShow/add',
+    list: '/shopQualifiedShow/listByTypeAndTargetId',
+    del: '/shopQualifiedShow/del',
+  },
+  // 店铺承诺
+  shopPromiseShow: {
+    add: '/shopPromiseShow/add',
+    list: '/shopPromiseShow/listByTypeAndTargetId',
+    del: '/shopPromiseShow/del'
+  },
+  // 活动风采展示
+  activePhotoShow: {
+    add: '/activityPhotoShow/add',
+    list: '/activityPhotoShow/listByTypeAndTargetId',
+    del: '/activityPhotoShow/del'
+  },
+  // 活动注意事项
+  activeattention: {
+    add: '/activityNote/add',
+    list: '/activityNote/listAll',
+    edit: '/activityNote/mod',
+    del: '/activityNote/del'
+  },
+  // 店铺商品
+  commodity: {
+    list: '/product/list',
+    add: '/product/add',
+    edit: '/product/mod',
+    del: '/product/del', 
+    detail: '/product/getById',
+    orderInfo: '/product/listOrderData'
+  },
+  // 优惠券(商场和店铺复用同一个接口)
+  coupon: {
+    list: '/coupon/list',
+    add: '/coupon/add',
+    edit: '/coupon/mod',
+    del: '/coupon/del',
+    detail: '/coupon/getById',
+    orderInfo: '/coupon/listOrderData'
+  },
+  // 促销活动(商场和店铺复用同一个接口)
+  pmSale: {
+    list: '/pmSale/list',
+    add: '/pmSale/add',
+    edit: '/pmSale/mod',
+    del: '/pmSale/del',
+    detail: '/pmSale/getById',
+    orderInfo: '/pmSale/listOrderData',
+    downLoad: '/pmSale/excelOut',
+    userInfo: '/pmSale/getPmSaleUserKV',
+  },
+  // 报名(商场和店铺复用同一个接口)
+  enterName: {
+    list: '/enterName/list',
+    add: '/enterName/add',
+    edit: '/enterName/mod',
+    del: '/enterName/del',
+    detail: '/enterName/getById',
+    orderInfo: '/enterName/listOrderData',
+    userInfo: '/enterName/getEnterNameUserKV',
+    // 文件导出
+    downLoad: '/enterName/excelOut',
+    child: {
+      list: '/enterNameItem/list',
+      add: '/enterNameItem/add',
+      edit: '/enterNameItem/mod',
+      del: '/enterNameItem/del',
+    },
+    kv: {
+      list: '/enterNameKV/list',
+      add: '/enterNameKV/add',
+      edit: '/enterNameKV/mod',
+      del: '/enterNameKV/del',
+    }
+  },
+  // 活动(商场和店铺复用同一个接口)
+  activityPlan: {
+    list: '/activityPlan/list',
+    add: '/activityPlan/add',
+    edit: '/activityPlan/mod',
+    del: '/activityPlan/del',
+    detail: '/activityPlan/getById',
+    orderInfo: '/activityPlan/listOrderData'
+  },
+  // 团购(商场和店铺复用同一个接口)
+  groupBuy: {
+    list: '/groupBuy/list',
+    add: '/groupBuy/add',
+    edit: '/groupBuy/mod',
+    del: '/groupBuy/del',
+    detail: '/groupBuy/getById',
+    checked: '/groupBuyItem/checkToShow',
+    child: {
+      list: '/groupBuyItem/list',
+      add: '/groupBuyItem/add',
+      edit: '/groupBuyItem/mod',
+      del: '/groupBuyItem/del',
+    }
+  },
+  // 异业合作
+  diffTrades: {
+    add: '/diffTrades/add',
+    del: '/diffTrades/del',
+    list: '/diffTrades/listSelf',
+    edit: '/diffTrades/mod',
+    listAll: '/diffTrades/listOther'
+  },
+  // 模板管理
+  template: {
+    add: '/activityTemplate/add',
+    edit: '/activityTemplate/update',
+    del: '/activityTemplate/delete',
+    list: '/activityTemplate/findByType',
+    detail: '/activityTemplate/findById'
+  },
+  // 抽奖管理
+  prizeDraw: {
+    list: '/lotteryBy/findListA',
+    add: '/lotteryBy/add',
+    edit: '/lotteryBy/update',
+    del: '/lotteryBy/delete',
+    detail: '/lotteryBy/getById',
+    orderInfo: '/lotteryBy/listOrderData',
+  }
+}
+// 招商管理
+api.publSubmit= {
+  list: '/publSubmit/list',
+  del: '/publSubmit/del'
+}
+api.market = {
+  photoShow: {
+    add: '/mallPhotoShow/add',
+    list: '/mallPhotoShow/listByTypeAndTargetId',
+    del: '/mallPhotoShow/del'
+  }
+}
+// 系统通告
+api.sysNotice = {
+  add: '/sysNotice/add',
+  list: '/sysNotice/list',
+  del: '/sysNotice/del',
+  edit: '/sysNotice/mod',
+  // 展示系统
+  listToshow: '/sysNotice/listBToShow'
+}
+// Vip模块
+api.vip = {
+  state: '/vip/getVipState',
+  mounth: '/vip/openMonVipOrder',
+  orderPay: '/vip/payVip',
+  year: '/vip/openYearVipOrder',
+  list: '/collectPerson/listUserByPage'
+}
+api.money = {
+  get: '/money/getMoney',
+  getDetail: '/money/getModuleMainInfo',
+  logModule: '/money/logModule'// 余额流水
+}
+// 提现模块-银行卡
+api.bankCard = {
+  list: '/bankCard/listMy',
+  add: '/bankCard/add',
+  del: '/bankCard/del'
+}
+// 提现和退款
+api.moneyApproval = {
+  moneyApproval: '/moneyApproval/moduleMoneyOut',
+  list: '/moneyApproval/listSelfMoneyOut'
+}
+// 提现信息
+api.moneyOutInfo = {
+  getInfo: '/moneyOutInfo/getInfo',
+  bindAliInfo: '/moneyOutInfo/bindAliInfo'
+}
+// 财务管理
+api.finance = {
+  moneyInRecord: '/statistics/moneyInRecord', // 获取微信支付宝进账记录
+  moneyRefundOutRecord: '/statistics/moneyRefundOutRecord', // 获取全部已退款出账记录
+  moneyOutRecord: '/statistics/moneyOutRecord', // 获取全部已提现出账记录
+  thirdMoney: '/statistics/thirdMoney', // 支付平台余额以及一些杂项统计值
+  getGrossData: '/statistics/getGrossData', // 平台数据统计
+  moneyDiff: '/moneyDiff/list', //差额详情查询
+  add: '/moneyDiff/add' // 补差
+}
+// 退款模块
+api.refund = {
+  downLoad: '/statistics/totalDataExcelOut',
+  list: '/moneyApproval/listOrderRefund',
+  listOutCoupon: '/outCouponCode/listAll', // 兑换码列表
+  edit: '/moneyApproval/dealOrderRefund', // 用户退款列表退款
+  orderEdit: '/order/moduleRefundOrder', // 订单退款接口
+  orderAll: '/order/superListData', // 超管用待筛选全部订单
+  Product: '/order/superGetProduct' // 超管用强制确认收货
+}
+api.moneyOut = {
+  list: '/moneyApproval/listModuleMoneyOut',
+  edit: '/moneyApproval/dealMoneyOut',
+  moneyOutFail: '/moneyApproval/moneyOutFail', // 拒绝打款
+  check: '/moneyApproval/moneyOutComp' // 手动打款
+}
+// 积分商城管理
+api.integra = {
+  list: '/integra/find',
+  edit: '/integra/update',
+  add: '/integra/add',
+  del: '/integra/delete',
+  detail: '/integra/findById'
+}
+
+// 常见问题管理
+api.query = {
+  add:'/query/add',
+  del: '/query/delete',
+  list: '/query/question',
+  edit: '/query/update'
+}
+// 反馈列表
+api.feedback = {
+  list: '/feedBack/list'
+}
+// 贴吧模块
+api.comment = {
+  list: '/comment/listComment',
+  del: '/comment/delComment', // 删除时给id
+  add: '/comment/addComment',
+  detail: '/comment/getById',
+  check: '/comment/zanComment', // 点赞
+  return: {
+    add: '/smallComment/add',
+    del: '/smallComment/del',
+    check: '/smallComment/zan',
+    list: '/smallComment/list',
+    listChild: '/smallComment/listSmall',
+    detail: '/smallComment/getById'
+  }
+}
+//  限时秒杀模块
+api.activityTop = {
+  add: '/activityTop/add',
+  del: '/activityTop/del',
+  list: '/activityTop/list',
+  edit: '/activityTop/mod',
+  detail: ''
+}
+
+// 分销商管理
+api.reseller = {
+  list: '/resellerApproval/listResellerJoin',
+  check: '/resellerApproval/dealResellerJoin',
+  listNext: '/reseller/listNext', // 所有分销商列表
+  setData: '/reseller/getResellerById', // 获得分销分成
+  set: '/reseller/setRateCount', // 设置分销商分成
+  moneyList: '/resellerApproval/listResellerMoneyOut', // 提现审批
+  checkMoneyList: '/resellerApproval/dealResellerMoneyOut',  // 审批提现
+}
+
+// 评论管理
+api.zComment = {
+  list: '/zComment/findComment',
+  detail: '/zComment/browse',
+  returnList: '/zComment/findOneReply',
+  replayList:'/zComment/findReplyS', // 回复的回复列表
+  add: '/zComment/addReply', // 回复
+  del: '/zComment/deleteReplyA', // 删除回复（'只能删除自己的'）
+  delAll: '/zComment/deleteCommentA', // 管理员删除评论
+} 
+
+// 渠道管理
+api.saleChannel = {
+  list: '/saleChannel/list',
+  add: '/saleChannel/add',
+  del: '/saleChannel/del',
+  searchActivity: '/saleChannel/searchActivity',
+  detail: '/saleChannel/channelOrder',
+}
+
+// 微信小程序
+api.wxTool = {
+  getImgUrl: '/wxTool/getMiniUnlimitedCode',
+  sendShagreData: '/kv/add',
+  getShagreData: '/kv/find'
+}
+
+// 商户码
+api.thirdCode = {
+  add: '/thirdCode/adds',
+  del: '/thirdCode/dels',
+  edit: '',
+  list: '/thirdCode/list'
+}
+
+// 导出商户码
+api.outCoupon = {
+  add: '/outCoupon/add',
+  del: '/outCoupon/del',
+  edit: '/outCoupon/mod',
+  list: '/outCoupon/list',
+  code: {
+    add: '/outCouponCode/add',
+    del: '/outCouponCode/dels',
+    list: '/outCouponCode/list',
+    downLoad: '/outCouponCode/excelOut'
+  }
+}
+
+// api.
+export default api

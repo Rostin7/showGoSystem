@@ -1,0 +1,476 @@
+<template>
+  <div class="login-container">
+    <div class="formContainer clearfix">
+      <div class="leftItem"><img src="../../assets/loginImg/loginImg.png" alt=""><i/></div>
+      <div class="rightItem" v-show="!isChangePass">
+        <p class="logo"><img src="../../assets/loginImg/mainlogo.png"></p>
+        <h3 class="title">众享乐店铺管理系统</h3>
+        <el-form
+          @submit.native.prevent
+          ref="loginForm"
+          :model="loginForm"
+          :rules="loginRules"
+          label-position="left"
+          label-width="0px"
+          class="login-form"
+        >
+          <el-form-item v-if="!isPhoneLogin" prop="" :class="{'achive': achive === 1}">
+            <i class="input_icon"><img src="../../assets/loginImg/user.png"></i>
+            <el-input v-model="loginForm.username" type="text" name="用户名" placeholder="用户名" @focus="achive=1"/>
+          </el-form-item>
+          <el-form-item v-if="!isPhoneLogin" prop="" :class="{'achive': achive === 2}">
+            <i class="input_icon"><img src="../../assets/loginImg/mima.png"></i>
+            <el-input v-model="loginForm.password" :type="pwdType" name="密码" placeholder="密码" @keyup.enter.native="handleLogin"  @focus="achive=2"/>
+            <i class="input_icon right" v-if="pwdType === 'password'" @click.stop="pwdType='txt'"><svg-icon icon-class="eye" /></i>
+            <i class="input_icon right" v-if="pwdType === 'txt'" @click.stop="pwdType='password'"><svg-icon icon-class="eye-open" /></i>
+          </el-form-item>
+          <el-form-item v-if="!isPhoneLogin">
+            <el-checkbox v-model="checkedUsername" @change="checkUsername">记住用户名</el-checkbox>
+            <el-button type="text" @click.native.prevent="isChangePass = true" style="position: absolute;right: 15px; color:#666666">忘记密码</el-button>
+          </el-form-item>
+          <el-form-item v-if="!isPhoneLogin">
+            <el-button type="primary" style="width:100%;height: 60px;border-radius: 30px;background: #4F93FE" :loading="loading" @click.native.prevent="handleLogin">
+              登录
+            </el-button>
+          </el-form-item>
+          <!-- 手机登录 -->
+          <el-form-item v-if="isPhoneLogin" :class="{'achive': achive === 3}">
+            <i class="input_icon"><img src="../../assets/loginImg/phone.png"></i>
+            <el-input v-model="phoneForm.phone" type="text" name="phone" placeholder="电话" @focus="achive=3" />
+          </el-form-item>
+          <el-form-item v-if="isPhoneLogin" :class="{'achive': achive === 4}">
+            <i class="input_icon"><img style="width: 17px;" src="../../assets/loginImg/yanzhengma.png"></i>
+            <el-input v-model="phoneForm.vsCode" type="text" name="vscode" placeholder="验证码"  @focus="achive=4"/>
+            <el-button type="text" @click.native.prevent="getVsCode" style="position: absolute;right: 15px;top: 10px;#4F93FE">获取验证码</el-button>
+          </el-form-item>
+          <el-form-item v-if="isPhoneLogin">
+            <el-checkbox v-model="checkedPhone" @change="checkPhone">记住手机号码</el-checkbox>
+          </el-form-item>
+          <el-form-item v-if="isPhoneLogin">
+            <el-button type="primary" style="width:100%;height: 60px;border-radius: 30px;background: #4F93FE" :loading="loading" @click.native.prevent="phoneLogin">
+              登录
+            </el-button>
+          </el-form-item>
+          <p class="main_nav"><span @click="isPhoneLogin = false ;achive = 1" v-show="isPhoneLogin">密码登录</span><span @click="isPhoneLogin = true ;achive = 3" v-show="!isPhoneLogin">手机短信登陆</span></p>
+        </el-form>
+      </div>
+      <!-- 忘记密码 -->
+      <change-pass v-if="isChangePass" @success="isChangePass=false" @goBack="isChangePass=false"/>
+    </div>
+    <p class="footer">Copyright © 2019 众享乐</p>
+  </div>
+</template>
+
+<script>
+// 引入加密文件
+import CryptoJS from 'crypto-js'
+import RSA from '../../utils/rsa.js'
+import { Base64 } from 'js-base64'
+import { promises } from 'fs'
+import ChangePass from './changePass'
+// import 'aes-js'
+// 引入api文件
+export default {
+  data() {
+    const validateUsername = (rule, value, callback) => {
+      if (!value) {
+        callback(new Error('请输入正确的用户名'))
+      } else {
+        callback()
+      }
+    }
+    const validatePass = (rule, value, callback) => {
+      if (value.length < 5) {
+        callback(new Error('密码不能小于5位'))
+      } else {
+        callback()
+      }
+    }
+    return {
+      achive: 1,
+      isChangePass: false,
+      loginForm: {
+        username: '',
+        password: ''
+      },
+      isPhoneLogin: false,
+      checkedUsername: false,
+      checkedPhone: false,
+      phoneForm: {
+        phone: '',
+        vsCode: ''
+      },
+      loginRules: {
+        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
+        password: [{ required: true, trigger: 'blur', validator: validatePass }]
+      },
+      loading: false,
+      pwdType: 'password',
+      userType: '',
+      loginType: ''
+    }
+  },
+  components: {
+    ChangePass
+  },
+  methods: {
+    showPwd() {
+      if (this.pwdType === 'password') {
+        this.pwdType = ''
+      } else {
+        this.pwdType = 'password'
+      }
+    },
+    // 保存电话
+    checkPhone(val) {
+      if (val) {
+        localStorage.setItem('login_phone', this.phoneForm.phone)
+      } else {
+        localStorage.removeItem('login_phone')
+      }
+    },
+    // 保存用户名
+    checkUsername(val) {
+      if (val) {
+        localStorage.setItem('login_User', this.loginForm.username)
+        localStorage.setItem('login_Pass', this.loginForm.password)
+      } else {
+        localStorage.removeItem('login_User')
+      }
+    },
+    getVsCode() {
+    // 获取验证码
+      this.$http({
+        url: this.$http.adornUrl(this.apiList.login.getVsCode),
+        method: 'post',
+        data: this.$http.adornData({ phoneNum: this.phoneForm.phone }, false)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.$message({
+            type: 'success',
+            message: '验证码已发送'
+          })
+        }
+      })
+    },
+    // 获得公钥并对密码加密
+    passChange(pass) {
+      return new Promise ((resolve, reject) => {
+        this.$http({
+          url: this.$http.adornUrl(this.apiList.login.getKey),
+          method: 'post',
+          data: this.$http.adornData('', '', false)
+        }).then(({ data }) => {
+          if (!data.result) {
+            this.$message('获取公钥失败')
+            this.loading = false
+            return
+          }
+          RSA.setMaxDigits(131)
+          const key = new RSA.RSAKeyPair(data.data.exponent, '', data.data.modulus)
+          const loginPassword = Base64.encode(RSA.encryptedString(key, pass))
+          resolve(loginPassword)
+        })
+      })
+    },
+    // 加密并转换token
+    setToken(data) {
+      // console.log(data)
+      const vm = this
+      // 获得密码的16位长度
+      const _token = data.data.token
+      // 数据加密
+      const WfAesUtils = {
+        _KEY: '12345678900000001234567890000000', // 16位
+        _IV: '1234567890000000', // 16位
+        Decrypt: function(str) {
+          const key = CryptoJS.enc.Utf8.parse(this._KEY)
+          const iv = CryptoJS.enc.Utf8.parse(this._IV)
+          const encryptedHexStr = CryptoJS.enc.Hex.parse(str)
+          const srcs = CryptoJS.enc.Base64.stringify(encryptedHexStr)
+          const decrypt = CryptoJS.AES.decrypt(srcs, key, { iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 })
+          const decryptedStr = decrypt.toString(CryptoJS.enc.Utf8)
+          return decryptedStr.toString()
+        }
+      }
+      const _reToken = WfAesUtils.Decrypt(_token)
+      // 用户token
+      vm.$cookie.set('token', _reToken)
+      // 用户ID
+      vm.$cookie.set('uid', data.data.userId)
+      vm.$cookie.set('moduleId', data.data.moduleId)
+      vm.$cookie.set('cityModuleId', data.data.moduleId)
+      vm.$cookie.set('chooseCityId', data.data.moduleId)
+      vm.$cookie.set('userType', data.data.userType)
+      vm.$cookie.set('moduleType', data.data.moduleType)
+      vm.$cookie.set('promoduleType', data.data.moduleType)
+      this.$store.dispatch('user/Login', _reToken).then(() => {
+        this.$store.dispatch('user/getuserData', data.data.moduleId).then(() => {
+          this.loading = false
+          this.$router.replace({ path: '/' })
+        })
+      }).catch(() => {
+        this.loading = false
+      })  
+    },
+    // 点击账号密码登录
+    handleLogin() {
+      const vm = this
+      this.$refs.loginForm.validate(valid => {
+        if (valid) {
+          // 获取公钥，开始loading
+          this.loading = true
+          this.passChange(this.loginForm.password).then((data) => {
+            this.$http({
+              url: this.$http.adornUrl(this.apiList.login.pass),
+              method: 'post',
+              data: this.$http.adornData({ userName: this.loginForm.username, pwd: data, userType: this.userType, ty: this.loginType }, false)
+            }).then(({ data }) => {
+              this.loading = false
+              if (data.result) {
+                this.setToken(data)
+              }
+            })
+          })
+        } else {
+          return false
+        }
+      })
+    },
+    // 手机登录
+    phoneLogin() {
+      const vm = this
+      this.$http({
+        url: this.$http.adornUrl(this.apiList.login.loginByPhone),
+        method: 'post',
+        data: this.$http.adornData({ phoneNum: this.phoneForm.phone, code: this.phoneForm.vsCode, userType: this.userType, ty: this.loginType }, false)
+      }).then(({ data }) => {
+        this.loading = false
+        if (data.result) {
+          this.setToken(data)
+        }
+      })
+    }
+  },
+  created() {
+    // 获得url参数
+    const url = window.location.href
+    // debugger
+    if (url.indexOf('loginType') !== -1) {
+      const arr = url.split('?')[1].split('&')
+      if (arr.length > 1) {
+        this.userType = arr[0].split("=")[1] === 'adminUser' ? 1 : 2
+        this.loginType = arr[1].split("=")[1] === 'entraAdmin' ? 'entrya' : 'entryb'
+      } else {
+        this.userType = 2
+        this.loginType = "entryb"
+      }
+    } else {
+      this.userType = 2
+      this.loginType = "entryb"
+    }
+    // console.log(this.userType)
+    // console.log(this.loginType)
+    this.$cookie.set('userType', this.userType)
+    this.$cookie.set('loginType', this.loginType)
+    // 判断终端，手机登录跳转到b端下载页面
+    const ua = navigator.userAgent
+    const ipad = ua.match(/(iPad).*OS\s([\d_]+)/),
+    isIphone =!ipad && ua.match(/(iPhone\sOS)\s([\d_]+)/),
+    isAndroid = ua.match(/(Android)\s+([\d.]+)/),
+    isMobile = isIphone || isAndroid;
+    if(isMobile){
+      window.location.href="http://b.chnzxl.com/download/index-b.html"
+    }else{
+
+    }
+    // 判断是否使用保存密码
+    if (localStorage.getItem('login_phone')) {
+      this.checkedPhone = true
+      this.phoneForm.phone = localStorage.getItem('login_phone')
+    }
+    if (localStorage.getItem('login_User')) {
+      this.checkedUsername = true
+      this.loginForm.username = localStorage.getItem('login_User')
+      this.loginForm.password = localStorage.getItem('login_Pass')
+    }
+  }
+}
+</script>
+
+<style rel="stylesheet/scss" lang="scss">
+  $bg:#2d3a4b;
+  $dark_gray:#889aa4;
+  $light_gray:#eee;
+  .login-container {
+    // min-height: 800px;
+    position: fixed;
+    height: 100%;
+    width:100%;
+    background:url('../../assets/loginImg/bg.png');
+    background-size: 100% 100%;
+    .formContainer{
+      width: 1122px;
+      height: 568px;
+      box-sizing: border-box;
+      background: #fff;
+      border: none;
+      position:absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding-top: 47px;
+      padding-left: 38px;
+      .leftItem{
+        width: 520px;
+        height: 477px;
+        float: left;
+        position: relative;
+        img{
+          width: 100%;
+          height: 100%;
+        }
+        i{
+          position: absolute;
+          top: 203px;
+          left: 163px;
+          width: 125px;
+          height: 106px;
+          background: url('../../assets/loginImg/font.png');
+          background-size: 100% 100%;
+        }
+      }
+      .rightItem{
+        float: left;
+        height: 581px;
+        width: 545px;
+        margin-top: -38px;
+        .logo{
+          text-align: center;
+          margin-top: 29px;
+          height: 56px;
+          img{
+            width: 56px;
+            height: 56px;
+          }
+        }
+        .title{
+          font-size: 36px;
+          color: #333;
+          text-align: center;
+          height: 36px;
+          margin-top: 36px;
+          margin-bottom: 0;
+          font-style: normal;
+          font-weight: 400;
+          letter-spacing: 20;
+        }
+        .login-form{
+          width: 100%;
+          box-sizing: border-box;
+          padding: 0 114px 0 101px;
+          margin-top: 80px;
+          .main_nav{
+            font-size: 14px;
+            color: #4F93FE;
+            text-align: right;
+            span{
+              cursor: pointer;
+            }
+          }
+        }
+      }
+    }
+    .footer{
+      position: absolute;
+      bottom: 25px;
+      left: 50%;
+      color: #FFFEFE;
+      font-size: 16px;
+      transform: translateX(-50%);
+    }
+    .el-input__inner{
+      color: #666;
+    }
+    .input_icon{
+      position: absolute;
+      left: 10px;
+      top: 6px;
+      z-index: 9999;
+      img{
+        width: 20px;
+        height: 20px;
+        vertical-align: middle;
+      }
+    }
+    .right{
+      left: auto;
+      right: 10px;
+    }
+    .el-form-item{
+      transition: all .1s;
+      margin-bottom: 20px;
+    }
+    .el-form-item:nth-child(3){
+      .el-form-item__content{
+        border-bottom: none;
+      }
+    }
+    .el-form-item__content{
+      box-sizing: border-box;
+      border-bottom: solid 1px #eee;
+    }
+    .achive{
+      border-bottom: solid #4F93FE;
+    }
+    .el-form-item__error{
+      top: 110%;
+    }
+    .el-input--medium .el-input__inner{
+      height: 100%;
+      padding: 0;
+      padding-left: 50px;
+      display: inline-block;
+      vertical-align: top;
+      box-sizing: border-box;
+    }
+    input:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0px 1000px #fff inset !important;
+      -webkit-text-fill-color: #333 !important;
+    }
+    input {
+      background: transparent;
+      border: 0px;
+      -webkit-appearance: none;
+      border-radius: 0px;
+      padding: 12px 5px 12px 15px;
+      color: $light_gray;
+      height: 47px;
+    }
+    .el-input {
+      display: inline-block;
+      height: 47px;
+      width: 85%;
+      vertical-align: middle;
+    }
+    .tips {
+      font-size: 14px;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+    .show-pwd {
+      position: absolute;
+      right: 10px;
+      top: 7px;
+      font-size: 16px;
+      color: $dark_gray;
+      cursor: pointer;
+      user-select:none;
+    }
+    .thirdparty-button{
+      position: absolute;
+      right: 35px;
+      bottom: 28px;
+    }
+  }
+</style>

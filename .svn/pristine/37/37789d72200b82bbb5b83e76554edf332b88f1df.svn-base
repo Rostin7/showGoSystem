@@ -1,0 +1,789 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+
+Vue.use(Router)
+
+/* Layout */
+import Layout from '@/layout'
+
+export const constantRoutes = [
+  {
+    path: '/login',
+    component: () => import('@/views/login/index'),
+    hidden: true
+  },
+  {
+    path: '/404',
+    component: () => import('@/views/error-page/404'),
+    hidden: true
+  },
+  {
+    path: '/401',
+    component: () => import('@/views/error-page/401'),
+    hidden: true
+  },
+  {
+    path: '/',
+    component: Layout,
+    redirect: '/dashboard',
+    children: [
+      {
+        path: 'dashboard',
+        component: () => import('@/views/dashboard/index'),
+        name: 'Dashboard',
+        meta: { title: '首页', icon: '首页', affix: true }
+      }
+    ]
+  },
+  {
+    path: '/profile',
+    component: Layout,
+    redirect: '/profile/index',
+    hidden: true,
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/profile/index'),
+        name: 'Profile',
+        meta: { title: 'Profile', icon: 'user', noCache: true }
+      }
+    ]
+  }
+]
+
+/**
+ * asyncRoutes
+ * the routes that need to be dynamically loaded based on user roles
+ */
+export const asyncRoutes = [
+  // 开发者配置模块
+  {
+    path: '/config',
+    component: Layout,
+    redirect: '/config/listApi',
+    name: 'Example',
+    meta: { title: '开发者配置', icon: 'people', roles: ['admin', '/shopTag/list'] },
+    children: [
+      {
+        path: 'listApi',
+        name: 'listApi',
+        component: () =>
+            import('@/views/config/apilist/index'),
+        meta: { title: 'api列表', roles: ['admin', '/shopTag/list'] }
+      },
+      {
+        path: 'module',
+        name: 'module',
+        component: () =>
+          import('@/views/config/module/index'),
+        meta: { title: '模块白名单', roles: ['admin'] }
+      },
+      {
+        path: 'moduleType',
+        name: 'moduleType',
+        component: () =>
+          import('@/views/config/module/moduleType'),
+        meta: { title: '模块类型', roles: ['admin'] }
+      },
+      {
+        path: 'mallGroup',
+        name: 'mallGroup',
+        component: () =>
+          import('@/views/config/group/index'),
+        meta: { title: '分类管理', roles: ['admin'] }
+      },
+      {
+        path: 'iconIndex',
+        name: 'iconIndex',
+        component: () =>
+          import('@/views/icons/index'),
+        meta: { title: 'svgicons', roles: ['admin'] }
+      },
+      {
+        path: 'APP_Version',
+        name: 'APP_Version',
+        component: () =>
+          import('@/views/config/app/index'),
+        meta: { title: 'APP版本', roles: ['admin'] }
+      },
+      {
+        path: 'netVersion',
+        name: 'netVersion',
+        component: () =>
+          import('@/views/config/netVersion/index'),
+        meta: { title: 'vue网页版本', roles: ['admin'] }
+      },
+      // 版本开关管理
+      {
+        path: 'APP_Version_Check',
+        name: 'APP_Version_Check',
+        component: () =>
+          import('@/views/config/appVersion/index'),
+        meta: { title: '版本开关配置', roles: ['admin'] }
+      },
+    ]
+  },
+  // 管理员配置
+  {
+    path: '/rooter',
+    component: Layout,
+    redirect: '/rooter/tag',
+    name: 'rooter',
+    meta: { title: '管理员配置', icon: '管理员', roles: ['/shopTag/list', '/role/list', '/moduleUser/listModuleUser','/moneyApproval/listModuleMoneyOut', '/sysNotice/list', '/query/question'] },
+    children: [
+      {
+        path: '/roleList',
+        name: 'roleList',
+        component: () =>
+          import('@/views/rooter/role/index'),
+        meta: { title: '角色与权限管理', roles: ['/role/list'] }
+      },
+      {
+        path: '/roleMember',
+        name: 'roleMember',
+        component: () =>
+          import('@/views/rooter/role/member'),
+        meta: { title: '职工管理', roles: ['/moduleUser/listModuleUser'] }
+      },
+      {
+        path: '/tag',
+        name: 'tag',
+        component: () =>
+          import('@/views/rooter/tag/index'),
+        meta: { title: '标签管理', roles: ['/shopTag/list'] }
+      },
+      {
+        path: '/sysNotice',
+        name: 'sysNotice',
+        component: () =>
+          import('@/views/rooter/sysNotice/index'),
+        meta: { title: '公告管理', roles: ['/sysNotice/list'] }
+      },
+      {
+        path: '/query',
+        name: 'query',
+        component: () =>
+          import('@/views/query/index'),
+        meta: { title: '常见问题', roles: ['/query/question'] }
+      }
+    ]
+  },
+  // 财务管理
+  {
+    path: '/finance',
+    component: Layout,
+    name: 'finance',
+    redirect: '/finance/index/',
+    meta: { title: '财务管理', icon: '财务管理', roles: ['/statistics/getGrossData', '/statistics/timeMoneyInDeatil', '/statistics/moneyInRecord', '/moneyApproval/listModuleMoneyOut', '/statistics/moneyRefundOutRecord', '/statistics/moneyOutRecord', '/statistics/thirdMoney', '/moneyDiff/list', '/moneyDiff/add']},
+    children: [
+      {
+        path: 'financeInTotal',
+        name: 'financeInTotal',
+        component: () =>
+          import('@/views/dashboard/blance'),
+        meta: { title: '运营数据' , roles: ['/statistics/getGrossData'] }
+      }
+      ,
+      {
+        path: 'statisticsOrder',
+        name: 'statisticsOrder',
+        component: () =>
+          import('@/views/finance/order'),
+        meta: { title: '订单统计', roles: ['/statistics/timeMoneyInDeatil'] }
+      },
+      {
+        path: 'financeIn',
+        name: 'financeIn',
+        component: () =>
+          import('@/views/finance/index'),
+        meta: { title: '进账管理' , roles: ['/statistics/moneyInRecord'] }
+      },
+      {
+        path: '/refund',
+        name: 'refund',
+        component: () =>
+          import('@/views/finance/refund/index'),
+        meta: { title: '提现管理', roles: ['/moneyApproval/listModuleMoneyOut'] }
+      },
+      {
+        path: 'financeRefund',
+        name: 'financeRefund',
+        component: () =>
+          import('@/views/finance/refund'),
+        meta: { title: '退款账单' , roles: ['/statistics/moneyRefundOutRecord'] }
+      },
+      {
+        path: 'withdrawal',
+        name: 'withdrawal',
+        component: () =>
+          import('@/views/finance/withdrawal'),
+        meta: { title: '提现账单' ,roles: ['/statistics/moneyOutRecord'] }
+      },
+      {
+        path: 'moneyDiff',
+        name: 'moneyDiff',
+        component: () =>
+          import('@/views/finance/moneyDiff'),
+        meta: { title: '差额管理' ,roles: ['/moneyDiff/list']}
+      },
+      {
+        path: 'balance',
+        name: 'balance',
+        component: () =>
+          import('@/views/finance/balance'),
+        meta: { title: '平台余额管理' ,roles: ['/statistics/thirdMoney']}
+      },
+      {
+        path: 'distributorMoneyOut',
+        name: 'distributorMoneyOut',
+        component: () =>
+          import('@/views/distributor/moneyOut'),
+        meta: { title: '分销商提现审批' ,roles: ['/resellerApproval/listResellerMoneyOut']}
+      }
+    ]
+  },
+  // 分销商管理
+  {
+    path: '/distributor',
+    component: Layout,
+    redirect: '/distributor/checkList',
+    name: 'Module',
+    meta: { title: '分销商管理', icon: '城市管理' , roles: ['/resellerApproval/listResellerJoin', '/reseller/listNext'] },
+    children: [
+      {
+        path: 'checkList',
+        name: 'checkList',
+        component: () =>
+          import('@/views/distributor/checkList'),
+        meta: { title: '分销商审批', roles: ['/resellerApproval/listResellerJoin'] }
+      },
+      {
+        path: 'setList',
+        name: 'setList',
+        component: () =>
+          import('@/views/distributor/setList'),
+        meta: { title: '分销商配置管理', roles: ['/reseller/listNext'] }
+      },
+      //查看下级
+      {
+        path: '/setListSecond/:id(\\d+)',
+        component: () => import('@/views/distributor/secondList'),
+        name: 'setListSecond',
+        meta: { title: '查看分销商下级', noCache: true, activeMenu: '/setList', roles: ['/reseller/listNext'] },
+        hidden: true
+      },
+    ]
+  },
+  // 城市与B端管理
+  {
+    path: '/module',
+    component: Layout,
+    redirect: '/module/listModule',
+    name: 'Module',
+    meta: { title: '城市管理', icon: '城市管理', roles: ['/module/listNext','/activityTop/list', '/moduleCity/listNextAll', '/groupBanner/listAll', '/hotActivity/list', '/hotShop/groupList', '/hotShop/listShopByCityId'] },
+    children: [{
+      path: 'listModule',
+      name: 'city',
+      component: () =>
+        import('@/views/module/listModule/index'),
+      meta: { title: '城市管理', roles: ['/module/listNext', '/moduleCity/listNextAll'] }
+    },
+    {
+      path: 'listBanner',
+      name: 'banner',
+      component: () =>
+        import('@/views/module/listModule/banner'),
+      meta: { title: '城市轮播图管理', roles: ['/groupBanner/listAll'] }
+    },
+    {
+      path: 'hotActivity',
+      name: 'hotActivity',
+      component: () =>
+        import('@/views/module/listModule/hotActivity/index'),
+      meta: { title: '每日优选', roles: ['/hotActivity/list'] }
+    },
+    {
+      path: 'hotShop',
+      name: 'hotShop',
+      component: () =>
+        import('@/views/module/listModule/hotShop'),
+      meta: { title: '商户推荐', roles: ['/hotShop/groupList', '/hotShop/listShopByCityId'] }
+    },
+    {
+      path: 'bestChoice',
+      name: 'bestChoice',
+      component: () =>
+        import('@/views/module/listModule/bestChoice'),
+      meta: { title: '限时秒杀', roles: ['/activityTop/list'] }
+    }
+    ]
+  },
+  // 渠道管理
+  {
+    path: '/channel',
+    component: Layout,
+    redirect: '/channel/list',
+    name: 'channel',
+    meta: { title: '', icon: '城市管理', roles: ['/saleChannel/list'] },
+    children: [
+      {
+        path: 'channelList',
+        name: 'channelList',
+        component: () =>
+          import('@/views/channel/index'),
+        meta: { title: '渠道管理', roles: ['/saleChannel/list'] }
+      },
+      {
+        path: 'channelOrder/:id(\\d+)',
+        name: 'channelOrder',
+        component: () =>
+          import('@/views/channel/order'),
+        meta: { title: '销售订单', noCache: true, activeMenu: '/channelList', roles: ['/saleChannel/channelOrder'] },
+        hidden: true
+      }
+    ]
+  },
+  // 审批管理
+  {
+    path: '/approval',
+    component: Layout,
+    redirect: '/approval/list',
+    name: 'approval',
+    meta: { title: '活动管理', icon: '城市管理', roles: ['/showToCApproval/list', '/activityPlan/surplus'] },
+    children: [
+      {
+        path: 'approvalActiveList',
+        name: 'approvalActiveList',
+        component: () =>
+          import('@/views/approval/index'),
+        meta: { title: '活动审批', icon: '城市管理' , roles: ['/showToCApproval/list'] }
+      },
+      {
+        path: 'surplus',
+        name: 'surplus',
+        component: () =>
+          import('@/views/approval/overdue'),
+        meta: { title: '下架提醒', icon: '城市管理' , roles: ['/activityPlan/surplus'] }
+      }
+    ]
+  },
+  // 积分商城管理
+  {
+    path: '/integra',
+    component: Layout,
+    name: 'integra',
+    meta: { title: '积分商场', icon: '会员中心', roles: ['/integra/find'] },
+    children: [
+      {
+        path: '/integraList',
+        component: () => import('@/views/integra/index.vue'),
+        name: 'integraList',
+        meta: { title: '积分商城', icon: '会员列表', roles: ['/integra/find'] }
+      }
+    ]
+  },
+  // 商场管理
+  {
+    path: '/market',
+    component: Layout,
+    name: 'market',
+    redirect: '/market/marketList/',
+    meta: { title: '商场管理', icon: '商场管理', roles: ['/moduleMall/listByPage','/moduleMall/modSelf', '/mallPhotoShow/listByTypeAndTargetId', '/hotShop/list', '/mallNews/list'] },
+    children: [
+      {
+        path: 'marketList',
+        name: 'marketList',
+        component: () =>
+          import('@/views/market/marketList/index'),
+        meta: { title: '商场列表', roles: ['/moduleMall/listByPage'] }
+      },
+      {
+        path: 'marketDetail',
+        name: 'marketDetail',
+        component: () =>
+          import('@/views/market/marketList/marketDetail'),
+        meta: { title: '信息修改', roles: ['/moduleMall/modSelf'] }
+      },
+      {
+        path: 'marketPhotoShow',
+        name: 'marketPhotoShow',
+        component: () =>
+          import('@/views/market/marketPhotoShow/index'),
+        meta: { title: '风采展示', roles: ['/mallPhotoShow/listByTypeAndTargetId'] }
+      },
+      {
+        path: 'mallHotShop',
+        name: 'mallHotShop',
+        component: () =>
+          import('@/views/market/hotShop/index'),
+        meta: { title: '商户推荐', roles: ['/hotShop/list'] }
+      },
+      {
+        path: 'mallNews',
+        name: 'mallNews',
+        component: () =>
+          import('@/views/market/marketNews/index'),
+        meta: { title: '新闻管理', roles: ['/mallNews/list'] }
+      }
+    ]
+  },
+  // 店铺管理
+  {
+    path: '/shop',
+    component: Layout,
+    redirect: '/shop/shopList',
+    name: 'shop',
+    meta: { title: '店铺管理', icon: '店铺管理', roles: ['/moduleShop/listByPage', '/moduleShop/modSelf', '/shopPhotoShow/listByTypeAndTargetId', '/shopPromiseShow/listByTypeAndTargetId', '/shopQualifiedShow/listByTypeAndTargetId', '/product/list'] },
+    children: [
+      {
+        path: '/shopList',
+        name: 'shopList',
+        component: () =>
+          import('@/views/shop/shopList/index'),
+        meta: { title: '店铺列表', roles: ['/moduleShop/listByPage'] }
+      },
+      {
+        path: '/shopDetail',
+        name: 'shopDetail',
+        component: () =>
+          import('@/views/shop/shopPhotoShow/shopDetail'),
+        meta: { title: '信息修改', roles: ['/moduleShop/modSelf'] }
+      },
+      {
+        path: '/shopPhotoShow',
+        name: 'shopPhotoShow',
+        component: () =>
+          import('@/views/shop/shopPhotoShow/index'),
+        meta: { title: '风采展示', roles: ['/shopPhotoShow/listByTypeAndTargetId'] }
+      },
+      {
+        path: '/shopQualifiedShow',
+        name: 'shopQualifiedShow',
+        component: () =>
+          import('@/views/shop/shopQualifiedShow/index'),
+        meta: { title: '店铺资质', roles: ['/shopQualifiedShow/listByTypeAndTargetId'] }
+      },
+      {
+        path: '/shopPromiseShow',
+        name: 'shopPromiseShow',
+        component: () =>
+          import('@/views/shop/shopPromiseShow/index'),
+        meta: { title: '店铺承诺', roles: ['/shopPromiseShow/listByTypeAndTargetId'] }
+      }
+    ]
+  },
+  // 活动管理
+  {
+    path: '/active',
+    component: Layout,
+    redirect: '/active/coupon',
+    name: 'shop',
+    meta: { title: '活动管理', icon: '活动管理', roles: ['/activityTemplate/findByType', '/findLottery/findList', '/coupon/list', '/pmSale/list', '/groupBuy/list', '/enterName/list', '/activityPlan/list', '/moneyApproval/listOrderRefund', '/diffTrades/listSelf', '/outCoupon/list'] },
+    children: [
+      {
+        path: '/coupon',
+        name: 'coupon',
+        component: () =>
+          import('@/views/active/coupon/index'),
+        meta: { title: '优惠券管理', roles: ['/coupon/list'] }
+      },
+      {
+        path: '/couponOrderInfo/:id(\\d+)',
+        component: () => import('@/views/active/coupon/couponData'),
+        name: 'couponOrderInfo',
+        meta: { title: '优惠券订单信息', noCache: true, activeMenu: '/coupon' },
+        hidden: true
+      },
+      {
+        path: '/commodity',
+        name: 'commodity',
+        component: () =>
+          import('@/views/active/commodity/index'),
+        meta: { title: '商品管理', roles: ['/product/list'] }
+      },
+      {
+        path: '/commodityOrderInfo/:id(\\d+)',
+        component: () => import('@/views/active/commodity/commodityData'),
+        name: 'commodityOrderInfo',
+        meta: { title: '商品订单信息', noCache: true, activeMenu: '/commodity' },
+        hidden: true
+      },
+      {
+        path: '/pmSale',
+        name: 'pmSale',
+        component: () =>
+          import('@/views/active/pmSale/index'),
+        meta: { title: '促销管理', roles: ['/pmSale/list'] }
+      },
+      {
+        path: '/pmSaleOrderInfo/:id(\\d+)',
+        component: () => import('@/views/active/pmSale/pmSaleData'),
+        name: 'pmSaleOrderInfo',
+        meta: { title: '促销订单信息', noCache: true, activeMenu: '/pmSale' },
+        hidden: true
+      },
+      {
+        path: '/pmSaleCode/:id(\\d+)/:type(\\d+)',
+        component: () => import('@/views/active/pmSale/code'),
+        name: 'pmSaleCode',
+        meta: { title: '兑换码管理', noCache: true, activeMenu: '/pmSaleCode' },
+        hidden: true
+      },
+      {
+        path: '/groupBuy',
+        name: 'groupBuy',
+        component: () =>
+          import('@/views/active/groupBuy/index'),
+        meta: { title: '团购管理', roles: ['/groupBuy/list'] }
+      },
+      {
+        path: '/groupBuyItem/:id(\\d+)',
+        component: () => import('@/views/active/groupBuy/itemList'),
+        name: 'groupBuyItem',
+        meta: { title: '团购分组', noCache: true, activeMenu: '/groupBuy' },
+        hidden: true
+      },
+      {
+        path: '/enterName',
+        name: 'enterName',
+        component: () =>
+          import('@/views/active/enterName/index'),
+        meta: { title: '报名管理', roles: ['/enterName/list'] }
+      },
+      // {
+      //   path: '/enterNameItem/:id(\\d+)',
+      //   component: () => import('@/views/active/enterName/itemList'),
+      //   name: 'enterNameItem',
+      //   meta: { title: '报名分组', noCache: true, activeMenu: '/enterName' },
+      //   hidden: true
+      // },
+      {
+        path: '/enterNameOrderInfo/:id(\\d+)',
+        component: () => import('@/views/active/enterName/itemData'),
+        name: 'enterNameOrderInfo',
+        meta: { title: '报名订单信息', noCache: true, activeMenu: '/enterName' },
+        hidden: true
+      },
+      {
+        path: '/activityPlan',
+        name: 'activityPlan',
+        component: () =>
+          import('@/views/active/activityPlan/index'),
+        meta: { title: '活动管理', roles: ['/activityPlan/list'] }
+      },
+      {
+        path: '/activityPlanOrderInfo/:id(\\d+)',
+        component: () => import('@/views/active/activityPlan/itemData'),
+        name: 'activityPlanOrderInfo',
+        meta: { title: '活动订单信息', noCache: true, activeMenu: '/activityPlan' },
+        hidden: true
+      },
+      {
+        path: '/prizeDraw',
+        name: 'prizeDraw',
+        component: () =>
+          import('@/views/active/prizeDraw/index'),
+        meta: { title: '抽奖管理', roles: ['/findLottery/findList'] }
+      },
+      {
+        path: '/prizeDrawOrderInfo/:id(\\d+)',
+        component: () => import('@/views/active/prizeDraw/prizeDrawData'),
+        name: 'prizeDrawOrderInfo',
+        meta: { title: '抽奖订单信息', noCache: true, activeMenu: '/prizeDraw' },
+        hidden: true
+      },
+      {
+        path: '/outCoupon',
+        name: 'outCoupon',
+        component: () =>
+          import('@/views/active/outCoupon/index'),
+        meta: { title: '兑换商品管理', roles: ['/outCoupon/list'] }
+      },
+      {
+        path: '/outCouponCodeInfo/:id(\\d+)',
+        component: () => import('@/views/active/outCoupon/outCouponData'),
+        name: 'couponOrderInfo',
+        meta: { title: '兑换商品兑换码管理', noCache: true, activeMenu: '/outCouponCode/list' },
+        hidden: true
+      },
+      {
+        path: '/activerefund',
+        name: 'activerefund',
+        component: () =>
+          import('@/views/active/refund/index'),
+        meta: { title: '退款管理', roles: ['/moneyApproval/listOrderRefund'] }
+      },
+      {
+        path: '/diffTrades',
+        name: 'diffTrades',
+        component: () =>
+          import('@/views/active/diffTrades/index'),
+        meta: { title: '异业合作', roles: ['/diffTrades/listSelf'] }
+      },
+      {
+        path: '/diffTradesList',
+        name: 'diffTradesList',
+        component: () =>
+          import('@/views/active/diffTrades/list'),
+        meta: { title: '异业合作信息', roles: ['/diffTrades/listOther'] },
+        hidden: true
+      },
+      {
+        path: '/template',
+        name: 'template',
+        component: () =>
+          import('@/views/active/template/index'),
+        meta: { title: '模板管理', roles: ['/activityTemplate/findByType'] }
+      },
+    ]
+  },
+  // 会员中心
+  {
+    path: '/vipcoontainer',
+    component: Layout,
+    name: 'VIP',
+    meta: { title: '会员中心', icon: '会员中心', roles: ['/collectPerson/listUserByPage'] },
+    children: [
+      {
+        path: '/VIP',
+        component: () => import('@/views/vip/member.vue'),
+        name: 'VIP',
+        meta: { title: '会员列表', icon: '会员列表', roles: ['/collectPerson/listUserByPage'] }
+      }
+    ]
+  },
+  // 个人中心
+  {
+    path: '/selfcontainer',
+    component: Layout,
+    name: 'Self',
+    meta: { title: '个人中心', icon: '个人中心', roles: ['/money/getMoney'] },
+    children: [
+      {
+        path: '/Self',
+        component: () => import('@/views/vip/info.vue'),
+        // component: () => import('@/views/nodeta.vue'),
+        name: 'Self',
+        meta: { title: '信息管理', icon: '信息管理', roles: ['/money/getMoney'] }
+      },
+      {
+        path: '/mouneyOut',
+        component: () => import('@/views/vip/mouneyOut.vue'),
+        name: 'mouneyOut',
+        meta: { title: '提现' },
+        hidden: true
+      },
+      {
+        path: '/updateVip',
+        component: () => import('@/views/vip/updateVip.vue'),
+        name: 'updateVip',
+        meta: { title: 'VIP信息' },
+        hidden: true
+      },
+      {
+        path: '/moneyDetail',
+        component: () => import('@/views/vip/moneyDetail'),
+        name: 'moneyDetail',
+        meta: { title: '余额明细', noCache: true, activeMenu: '/Self' },
+        hidden: true
+      },
+    ]
+  },
+  // 订单管理
+  {
+    path: '/order',
+    component: Layout,
+    name: 'order',
+    meta: { title: '订单管理', icon: '订单管理', roles: ['/order/superListData', '/outCouponCode/listAll'] },
+    children: [
+      {
+        path: '/superListData',
+        component: () => import('@/views/order/index.vue'),
+        name: 'superListData',
+        meta: { title: '订单列表', icon: '订单管理', roles: ['/order/superListData'] }
+      },
+      {
+        path: '/outCouponCode',
+        component: () => import('@/views/order/outCouponCode.vue'),
+        name: 'outCouponCode',
+        meta: { title: '导出码列表', icon: '订单管理', roles: ['/outCouponCode/listAll'] }
+      }
+    ]
+  },
+  // 商户联系方式
+  {
+    path: '/info',
+    component: Layout,
+    name: 'info',
+    meta: { title: '反馈中心', icon: '商户联系方式', roles: ['/publSubmit/list', '/feedBack/list'] },
+    children: [
+      {
+        path: '/publSubmit',
+        component: () => import('@/views/publSubmit/index.vue'),
+        name: 'publSubmit',
+        meta: { title: '意向商户列表', roles: ['/publSubmit/list'] }
+      },
+      {
+        path: '/feedBack',
+        component: () => import('@/views/publSubmit/feedBack.vue'),
+        name: 'feedBack',
+        meta: { title: '客户反馈列表', roles: ['/feedBack/list'] }
+      }
+    ]
+  },
+  // 帖子管理
+  {
+    path: '/comment',
+    component: Layout,
+    name: 'comment',
+    meta: { title: '帖子管理', icon: '商户联系方式' },
+    hidden: true,
+    children: [
+      {
+        path: '/commentList',
+        component: () => import('@/views/comment/index.vue'),
+        name: 'commentList',
+        meta: { title: '帖子管理', roles: ['/comment/listComment'] }
+      },
+      {
+        path: '/commentDetail/:id(\\d+)',
+        component: () => import('@/views/comment/detail'),
+        name: 'couponOrderInfo',
+        meta: { title: '帖子详情', noCache: true, activeMenu: '/commentList' },
+        hidden: true
+      },
+      // 评论列表
+      {
+        path: '/zCommentList/:id(\\d+)/:type(\\d+)',
+        component: () => import('@/views/comment/zCommentList'),
+        name: 'zCommentList',
+        meta: { title: '评论列表', noCache: true },
+        hidden: true
+      },
+      {
+        path: '/zCommentReply/:id(\\d+)',
+        component: () => import('@/views/comment/zCommentReply'),
+        name: 'zCommentReply',
+        meta: { title: '评论详情', noCache: true },
+        hidden: true
+      },
+    ]
+  },
+  { path: '*', redirect: '/404', hidden: true }
+]
+
+const createRouter = () => new Router({
+  // mode: 'history', // require service support
+  scrollBehavior: () => ({ y: 0 }),
+  routes: constantRoutes
+})
+
+const router = createRouter()
+
+// Detail see: https://github.com/vuejs/vue-router/issues/1234#issuecomment-357941465
+export function resetRouter() {
+  const newRouter = createRouter()
+  router.matcher = newRouter.matcher // reset router
+}
+
+export default router

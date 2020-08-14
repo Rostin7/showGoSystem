@@ -1,0 +1,86 @@
+<template>
+  <div>
+    <el-form :inline="true" class="demo-form-inline" @submit.native.prevent>
+      <el-form-item style="float: right">
+        <el-button type="text" @click="getDataList"><svg-icon icon-class="search"/></el-button>
+      </el-form-item>
+      <el-form-item style="float: right" label="请输入活动名称">
+        <el-input
+          placeholder="请输入活动名称"
+          v-model="searchName"
+          @keydown.enter.prevent.native="search"
+          @clear="search"
+          clearable>
+        </el-input>
+      </el-form-item>
+    </el-form>
+    <el-table :data="tableList" v-loading="listLoading" element-loading-text="拼命加载中">
+      <el-table-column prop="id" label="#id" align="center" header-align="center" />
+      <el-table-column prop="name" label="活动名称" align="center" header-align="center" />
+      <el-table-column label="操作"  header-align="center" align="center">
+        <template slot-scope="scope">
+          <el-button
+            size="mini"
+            type="primary"
+            @click="chooseShop(scope.row)">
+            选择
+          </el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+    <el-pagination
+      layout="total, prev, pager, next"
+      background
+      :page-size="pageSize"
+      :total="total"
+      style="text-align:center;"
+      @current-change="handleCurrentChange"
+    />
+  </div>
+</template>
+<script>
+export default {
+  data() {
+    return {
+      tableList: [],
+      listLoading: false,
+      pageSize: 10,
+      page: 1,
+      total: 0,
+      searchName: ''
+    }
+  },
+  methods: {
+    search() {
+      this.page = 1
+      this.getDataList()
+    },
+    // 分页组件切换
+    handleCurrentChange(value) {
+      this.page = value
+      this.getDataList()
+    },
+    getDataList() {
+      this.listLoading = true
+      const url = this.apiList.saleChannel.searchActivity
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({value: this.searchName, page: this.page, size: this.pageSize}, url, true)
+      }).then(({ data }) => {
+        this.listLoading = false
+        if (data.result) {
+          this.tableList = data.data.records
+          this.total = data.data.total
+        }
+      })
+    },
+    chooseShop(val) {
+      this.$emit('chooseActive', val)
+    }
+  },
+  created() {
+    this.getDataList('')
+  }
+}
+</script>

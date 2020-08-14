@@ -1,0 +1,140 @@
+<template>
+  <div>
+    <el-tag v-if="approvalId" @click.stop="cancelCheckState">审批中</el-tag>
+    <el-tag v-if="!approvalId&&sysDown&&showToC" type="info" @click="tornDown">过期/售空</el-tag>
+    <el-tag v-if="!sysDown&&showToC" type="success" @click.stop="changeState">已上架</el-tag>
+    <el-tag v-if="!approvalId&&!showToC" type="info" @click.stop="changeState">未上架</el-tag>
+  </div>
+</template>
+<script>
+export default {
+  props: {
+    approvalId: {},
+    sysDown: {
+      type: Boolean,
+      default: false
+    },
+    show: {
+      type: Boolean,
+      default: false
+    },
+    activityId: {
+      type: Number,
+      default: 0
+    },
+    activityType: {
+      type: Number,
+      default: 301
+    }
+  },
+  data() {
+    return {
+      showToC: false
+    }
+  },
+  methods: {
+    /**
+     *  审批中点击下架
+     */ 
+     tornDown() {
+       const url = this.apiList.shop.check
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ showToC: false, activityId: this.activityId, activityType: this.activityType }, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.showToC = false
+          this.$emit('changeData')
+        }
+      })
+     },
+    /**
+     * 切换上架状态
+     */
+    changeState() {
+      const state = !this.showToC
+      const url = this.apiList.shop.check
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ showToC: state, activityId: this.activityId, activityType: this.activityType }, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.$emit('changeData')
+        }
+      })
+    },
+    /**
+     * 取消审批并下架商品
+     */
+    cancelCheck() {
+      const url = this.apiList.shop.cancel
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ approvalId: this.approvalId }, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.$emit('changeData')
+        }
+      })
+    },
+    /**
+     * 通过审批并上架商品
+     */
+    check() {
+      const url = this.apiList.showToCApproval.check
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ approvalId: this.approvalId, agree: true }, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.$emit('changeData')
+        }
+      })
+    },
+    // 点击审核中的操作
+    cancelCheckState() {
+      // 判断是b端原生商户账号还是切换身份的账号
+      if(this.$cookie.get('moduleType') == this.$cookie.get('promoduleType')) {
+        this.$confirm('此操作将撤回已提交的审批, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          this.cancelCheck()
+        }).catch(() => {
+        })
+      } else {
+        this.$confirm('此操作将改变商户提交的审批状态', '提示', {
+          confirmButtonText: '上架',
+          cancelButtonText: '下架',
+          type: 'info',
+          center: true
+        }).then(() => {
+          this.check()
+        }).catch(() => {
+          this.cancelCheck()
+        })
+      }
+    },
+  },
+  created() {
+    this.showToC = this.show
+    console.log(this.show)
+  },
+  watch: {
+    show() {
+      this.showToC = this.show
+    },
+    sysDown() {
+      this.showToC = this.show
+    },
+    approvalId() {
+      // this.showToC = this.show
+    }
+  }
+}
+</script>

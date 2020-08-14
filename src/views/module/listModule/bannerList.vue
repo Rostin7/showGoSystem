@@ -1,0 +1,514 @@
+<template>
+<div v-loading="listLoading" class="bannerList">
+    <ul class="el-upload-list el-upload-list--picture-card">
+      <draggable v-model="dataList" @update="datadragEnd" :options = "{animation:500}">
+        <li class="el-upload-list__item is-ready" :class="bindClass" v-for="item in dataList" :key="item.id">
+          <img :src="item.imgUrl + '!660w'"  alt style="height:100%;" />
+          <span class="el-upload-list__item-actions">
+            <span class="el-upload-list__item-preview">
+              <i class="el-icon-zoom-in" @click="handlePictureCardPreview('', item.imgUrl)"></i>
+            </span>
+            <!-- 编辑 -->
+            <span class="el-upload-list__item-edit">
+              <i class="el-icon-edit" @click="handleEdit(item)"></i>
+            </span>
+            <!-- 修改 -->
+            <span clsas="el-upload-list__item-delete" v-if = "isAuth('/groupBanner/del')">
+              <i class="el-icon-delete" @click="handleRemove('', '', item.id)"></i>
+            </span>
+          </span>
+        </li>
+      </draggable>
+    </ul>
+  <!-- 图片裁剪上传控件 -->
+  <!-- <upload
+    v-if = "isAuth('/groupBanner/add')"
+    class="groupBanner_pic"
+    action="https://jsonplaceholder.typicode.com/posts/"
+    :http-request="choose"
+    :show-file-list="false"
+    :auto-upload="true">
+    <i class="el-icon-plus uploader-icon"></i>
+  </upload> -->
+  <upload @fileChange="choose" class="avatar-uploader" :width="width" :height="height">
+    <i class="el-icon-plus"></i>
+  </upload>
+  <el-dialog :visible.sync="dialogVisible">
+    <img width="100%" :src="dialogImageUrl" alt="">
+  </el-dialog>
+  <!-- 添加和修改的弹窗 -->
+  <el-dialog :visible.sync="formVisible">
+    <el-form @submit.native.prevent :model="dataForm" :rules="dataRule" :inline="false"  ref="dataForm" label-width="100px">
+      <el-form-item label="标题"  prop="title">
+        <el-input v-model="dataForm.title" autocomplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="类型">
+        <el-radio-group v-model="type">
+          <el-radio :label="0" border>无跳转</el-radio>
+          <el-radio :label="101" v-if="isAuth('/moduleShop/list')" border>跳转到指定店铺</el-radio>
+          <el-radio :label="201" v-if="isAuth('/moduleMall/list')" border>跳转到指定商场</el-radio>
+          <el-radio :label="301" v-if="isAuth('/groupBanner/searchActivity')" border>跳转到指定活动</el-radio>
+          <el-radio :label="501" border>跳转到指定链接</el-radio>
+        </el-radio-group>
+      </el-form-item>
+      <el-form-item label="跳转路径" v-if="type !== 0">
+        <!-- 选择店铺 -->
+        <span v-if="type === 101">{{ shopName }}</span>
+        <el-button @click="dialogFormVisible = true" v-if="type === 101">选择店铺</el-button>
+        <!-- 选择商场 -->
+        <span v-if="type === 201">{{ mallName }}</span>
+        <el-button @click="dialogFormVisible = true" v-if="type === 201">选择商场</el-button>
+        <!-- 选择活动 -->
+        <span v-if="type === 301">{{ activeName }}</span>
+        <el-button @click="dialogFormVisible = true" v-if="type === 301">选择活动</el-button>
+        <el-input v-model="dataForm.outUrl" autocomplete="off"  v-if="type === 501"></el-input>
+      </el-form-item>
+    </el-form>
+    <span slot="footer" class="dialog-footer">
+      <el-button @click="formVisible = false">取 消</el-button>
+      <el-button type="primary" @click="submitFormAdd()" :loading="loading">添加</el-button>
+    </span>
+  </el-dialog>
+  <el-dialog :visible.sync="dialogFormVisible" :close-on-click-modal="false" :modal="true" :append-to-body="true" width="800px">
+    <shop-list @chooseShop="chooseShop" v-if="type === 101"></shop-list>
+    <mall-list @chooseMall="chooseMall" v-if="type === 201"></mall-list>
+    <active-list v-if="type === 301" :moduleId="cityId" :activeId="targetId.activeId"  @chooseActive="chooseActive"></active-list>
+  </el-dialog>
+  <div>
+    <p style="color: #e51D27; font-size: 12px;">推荐尺寸{{width*2}}*{{height*2}}像素</p>
+  </div>
+</div>
+</template>
+<script>
+import draggable from 'vuedraggable'
+import CityList from '../cityList.vue'
+import ShopList from '../../utils/shopList.vue'
+import MallList from '../../utils/mallList.vue'
+import ActiveList from '../../utils/activeList'
+import moduleList from '../../../utils/module.js'
+import sha256 from 'sha256'
+import Upload from '../../utils/upload.vue'
+import { defaults } from 'codemirror'
+export default {
+  props: {
+    cityId: {},
+    typeId: {
+      default: 0
+    },
+    width: {
+      default: 375
+    },
+    height: {
+      default: 205
+    }
+  },
+  data() {
+    return {
+      activeName: '',
+      shopName: '',
+      mallName: '',
+      dialogFormVisible: false,
+      targetId: {
+        shop: null,
+        market: null,
+        activeId: null,
+      },
+      bindClass: {},
+      fileList: [],
+      dataList: [],
+      type: 0,
+      chooseTarget: false,
+      reloadShopList: false,
+      dialogImageUrl: '',
+      dialogVisible: false,
+      listLoading: false,
+      formVisible: false,
+      // 上传图片地址
+      isEdit: false,
+      loading: false,
+      // 预选颜色
+      predefineColors: [
+        '#ff4500',
+        '#ff8c00',
+        '#ffd700',
+        '#90ee90',
+        '#00ced1',
+        '#1e90ff',
+        '#c71585',
+        'rgba(255, 69, 0, 0.68)',
+        'rgb(255, 120, 0)',
+        'hsv(51, 100, 98)',
+        'hsva(120, 40, 94, 0.5)',
+        'hsl(181, 100%, 37%)',
+        'hsla(209, 100%, 56%, 0.73)',
+        '#c7158577'],
+      dataForm: {
+        title: '',
+        type: null,
+        targetId: '0',
+        outUrl: '',
+        imgUrl: '',
+        mainColor: '',
+        id: '',
+        moduleId: this.cityId,
+        groupId: this.typeId
+      },
+      dataRule: {
+        title: [
+          { required: true, message: '名称不能为空', trigger: 'blur' }
+        ]
+      }
+    }
+  },
+  components: {
+    CityList,
+    ShopList,
+    MallList,
+    Upload,
+    draggable,
+    ActiveList
+  },
+  methods: {
+    datadragEnd(evt) {
+      evt.preventDefault()
+      let _idx = 0 // 排序差值
+      let lastIndex = 0 // 上一位的排序值
+      if(evt.newIndex == this.dataList.length -1) {
+        // 拖拽到最后一位
+        lastIndex = this.dataList[evt.newIndex - 1].sortCode
+        _idx =  10
+      } else if(evt.newIndex == 0){
+        lastIndex = 0
+         _idx = Math.round(this.dataList[evt.newIndex + 1].sortCode * 1000 / 2) / 1000
+      } else {
+        lastIndex = this.dataList[evt.newIndex - 1].sortCode
+        _idx = Math.abs(Math.round(( this.dataList[evt.newIndex + 1].sortCode - this.dataList[evt.newIndex - 1].sortCode) * 1000 / 2)/ 1000)
+      }
+      const url = this.apiList.module.city.banner.sort
+      const fromData = {
+        groupId: this.typeId,
+        id: this.dataList[evt.newIndex].id,
+        sortCode: _idx,
+        lastCode: lastIndex,
+        cityId: this.$cookie.get('chooseCityId')
+      }
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData( fromData, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          // console.log(data)
+          this.dataList[evt.newIndex].sortCode = _idx + lastIndex
+          const vm = this
+          if(data.data != null) {
+            Object.keys(data.data).forEach(function(key){
+              const index = vm.dataList.findIndex( item => item.id == key )
+              vm.dataList[index].sortCode = data.data[key]
+            })
+            console.log(this.dataList)
+          }
+        }
+      })
+      // const _idx = this.dataList[evt.newIndex]
+    },
+    // 重置提交数据
+    resetData() {
+      this.dataForm = {
+        title: '',
+        type: null,
+        typePro: null,
+        targetId: '0',
+        outUrl: '',
+        imgUrl: '',
+        mainColor: '',
+        id: '',
+        moduleId: this.cityId,
+        groupId: this.typeId
+      }
+      this.type = 0
+    },
+    // 轮播图数据
+    getDataList() {
+      this.listLoading = true
+      this.$http({
+        url: this.$http.adornUrl(this.apiList.module.city.banner.list),
+        method: 'post',
+        data: this.$http.adornData({ moduleId: this.cityId, groupId: this.typeId }, this.apiList.module.city.banner.list, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.dataList = data.data
+        } else {
+          // this.$message.error(data.msg)
+        }
+        this.listLoading = false
+      }).catch(() => {
+        console.log('提交失败')
+      })
+    },
+    chooseCity(val) {
+      console.log('修改城市')
+    },
+    chooseShop(data) {
+      // this.dataForm.targetId = val
+      this.dataForm.targetId =data.id
+      this.shopName =  data.name
+      this.dialogFormVisible = false
+    },
+    chooseMall(data) {
+      this.dataForm.targetId =data.id
+      this.mallName =  data.name
+      this.dialogFormVisible = false
+    },
+    // 选择活动id
+    chooseActive(data) {
+      this.dataForm.targetId =data.activityId
+      this.activeName = data.name
+      this.dialogFormVisible = false
+      this.chooseActiveType(data.type)
+    },
+    // 选择活动类型
+    chooseActiveType(val) {
+      // this.typePro = val / 10 + 301   中间可能出现超过10的情况，需要手动配置
+      switch (val) {
+        case 101 :
+          this.typePro = 311
+          break
+        case 201 :
+          this.typePro = 321
+          break
+        case 301 :
+          this.typePro = 331
+          break
+        case 401 :
+          this.typePro = 341
+          break
+        case 501 :
+          this.typePro = 351
+          break
+        case 601 :
+          this.typePro = 361
+          break
+        case 701 :
+          this.typePro = 371
+          break
+      }
+    },
+    handleRemove(file, fileList, id) {
+      if (id) {
+        this.listLoading = true
+        this.$http({
+          url: this.$http.adornUrl(this.apiList.module.city.banner.del),
+          method: 'post',
+          data: this.$http.adornData({ moduleId: this.cityId, id: id }, this.apiList.module.city.banner.del, true)
+        }).then(({ data }) => {
+          if (data.result) {
+            this.dataList.splice(this.dataList.findIndex(v => v.id === id), 1)
+            this.$message({ type: 'success', message: '提交成功' })
+          } else {
+            // 删除失败
+            // this.$message.error(data.msg)
+          }
+          this.listLoading = false
+        }).catch(() => {
+          // this.$message.error('未知错误')
+        })
+      } else {
+        this.listLoading = true
+        this.$http({
+          url: this.$http.adornUrl(this.apiList.module.city.banner.del),
+          method: 'post',
+          data: this.$http.adornData({ moduleId: this.cityId, id: file.id }, this.apiList.module.city.banner.del, true)
+        }).then(({ data }) => {
+          if (data.result) {
+          } else {
+            // 删除失败
+            this.fileList.push(file)
+            // this.$message.error(data.msg)
+          }
+          this.listLoading = false
+        }).catch(() => {
+          // this.$message.error('未知错误')
+          console.log('提交失败')
+        })
+      }
+    },
+    handlePictureCardPreview(file, url) {
+      this.dialogImageUrl = file ? file.url : url
+      this.dialogVisible = true
+    },
+    choose(data) {
+      console.log(data)
+      this.addData(data)
+    },
+    addData(url) {
+      // 提交表单
+      // this.listLoading = true
+      this.isEdit = false
+      this.dataForm.imgUrl = url
+      this.dataForm.type = this.type
+      this.formVisible = true
+    },
+    // 点击修改
+    handleEdit(item) {
+      this.isEdit = true
+      // this.dataForm = {
+      //   id: item.id,
+      //   moduleId: item.cityId,
+      //   groupId: item.typeId,
+      //   type: item.type,
+      //   targetId: item.targetId,
+      //   outUrl: item.outUrl,
+      //   imgUrl: item.imgUrl,
+      //   mainColor: item.mainColor,
+      //   title: item.title
+      // }
+      this.dataForm.id = item.id
+      this.dataForm.imgUrl = item.imgUrl
+      this.dataForm.outUrl = item.outUrl
+      this.dataForm.mainColor = item.mainColor
+      this.dataForm.title = item.title
+      this.typePro = item.type
+      if (parseInt(item.type / 100) === 3) {
+        this.type = 301
+      } else {
+        this.type = item.type
+      }
+      console.log(item.type / 100)
+      console.log(this.type)
+      this.dataForm.type = item.type
+      this.dataForm.targetId = item.targetId
+      // 判断类型并赋值
+      if (this.type === 101) {
+        this.targetId = {
+          shop: item.targetId,
+          market: null
+        }
+      } else if (this.type === 201) {
+        this.targetId = {
+          shop: null,
+          market: item.targetId
+        }
+      }
+      this.formVisible = true
+    },
+    getMaxData() {
+      let max = 10
+      this.dataList.forEach(item => {
+        item.sortCode > max
+        max = item.sortCode + 10
+      })
+      return max
+    },
+    // 点击提交
+    submitFormAdd() {
+      let url
+      if (this.isEdit) {
+        url = this.apiList.module.city.banner.edit
+      } else {
+        url = this.apiList.module.city.banner.add
+      }
+      this.dataForm.type = this.type === 301 ? this.typePro : this.type
+      if(!this.isEdit) {
+        this.dataForm.sortCode = this.getMaxData()
+      }
+      this.isEdit = false
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          // 如果是添加的话取得列表的最大值
+          this.$http({
+            url: this.$http.adornUrl(url),
+            method: 'post',
+            data: this.$http.adornData(this.dataForm, url, true)
+          }).then(({ data }) => {
+            if (data.result) {
+              this.$message({ type: 'success', message: '提交成功' })
+              this.getDataList()
+            } else {
+              // this.$message({ message: data.msg, type: 'warning' })
+            }
+            // 关闭弹出层
+            this.resetData()
+            this.listLoading = false
+            this.formVisible = false
+          })
+        }
+      })
+    }
+  },
+  created() {
+    this.getDataList()
+    let type = {
+        market: moduleList.data[0].id,
+        child: moduleList.data[1].id,
+        makeup: moduleList.data[2].id,
+        petsId: moduleList.data[3].id,
+        otherId: moduleList.data[4].id,
+        searchId: 301
+      }
+    switch (this.typeId) {
+      case 0:
+        this.bindClass = {'el-upload-list__index': true}
+        break
+      case type.searchId:
+        this.bindClass = {'el-upload-list__search': true}
+        break
+      default:
+        this.bindClass = {'el-upload-list__pets': true}
+        break
+    }
+  }
+}
+</script>
+<style lang="scss">
+.bannerList{
+  .el-upload-list__item{
+    width: 270px;
+  }
+  .el-upload-list__index{
+    width: 370px;
+  }
+  .el-upload-list__market{
+    width: 290px;
+  }
+  // .el-upload-list__beauty{
+  //   width: 366px;
+  // }
+  .el-upload-list__pets{
+    width: 330px;
+  }
+  .el-upload-list__other{
+    width: 266px;
+  }
+  .el-upload-list__search{
+    width: 530px;
+  }
+  .groupBanner_pic{
+    display: inline-block;
+    background-color: #fbfdff;
+    border: 1px dashed #c0ccda;
+    border-radius: 6px;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    width: 148px;
+    height: 148px;
+    line-height: 146px;
+    vertical-align: top;
+    .uploader-icon{
+      font-size: 28px;
+      color: #8c939d;
+      width: 148px;
+      height: 148px;
+      line-height: 146px;
+      text-align: center;
+    }
+  }
+  .el-radio-group{
+    margin-top: -10px;
+  }
+  .el-radio.is-bordered+.el-radio.is-bordered{
+    margin-top: 10px;
+    margin-left: 0;
+  }
+}
+</style>

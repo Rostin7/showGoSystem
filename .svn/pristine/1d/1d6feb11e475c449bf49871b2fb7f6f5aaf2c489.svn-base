@@ -1,0 +1,143 @@
+<template>
+<div class="prizeDrawItem">
+  <el-form @submit.native.prevent :model="prizeDrawItem" :rules="dataRule" :inline="false"  ref="prizeDrawItem" label-width="110px" class="demo-ruleForm">
+    <el-form-item label="类型">
+      <el-input v-model="prizeDrawItem.rank" autocomplete="off" placeholder="一等奖"></el-input>
+    </el-form-item>
+    <el-form-item label="名称" prop="prizeName">
+      <el-input v-model="prizeDrawItem.prizeName" autocomplete="off"></el-input>
+    </el-form-item>
+    <el-form-item label="数量"  prop="prizeNum">
+      <el-input v-model="prizeDrawItem.prizeNum" autocomplete="off"></el-input>
+    </el-form-item>
+    <el-form-item label="主图">
+      <upload @fileChange="chooseImg" class="avatar-uploader" :width="316" :height="141" style="width: 158px;height: 70px; line-height: 70px">
+        <img v-if="prizeDrawItem.prizeImg" :src="prizeDrawItem.prizeImg" class="avatar">
+        <i v-else class="el-icon-plus"></i>
+      </upload>
+      <div class="test_container">
+        <span>示例：</span>
+        <img src="../../../assets/test_1.png" alt="">  
+      </div>
+      <div class="img_size_text">推荐尺寸: {{ 632 }} * {{ 282 }}</div>
+    </el-form-item>
+      <!-- 封面 -->
+      <el-form-item label="封面">
+        <upload @fileChange="chooseImg_imgUrlSquare" :width="194" :height="191" style="width: 97px;height: 95.5px; line-height: 95.5px">
+          <img v-if="prizeDrawItem.prizeImgSquare" :src="prizeDrawItem.prizeImgSquare" class="avatar" style="width: 97px;height: 95.5px;">
+          <i v-else class="el-icon-plus"></i>
+        </upload>
+        <div class="test_container">
+          <span>示例：</span>
+          <img class="" src="../../../assets/test_2.png" alt="">  
+        </div>
+        <div class="img_size_text">推荐尺寸: {{ 194 }} * {{ 191 }}</div>
+      </el-form-item>
+    <el-form-item>
+      <el-button type="primary" @click="submitForm">立即提交</el-button>
+      <el-button @click="close">取消</el-button>
+    </el-form-item>
+  </el-form>
+</div>
+</template>
+<script>
+import { timestamp } from '../../../utils/timeChange.js'
+import Upload from '../../utils/upload.vue'
+export default {
+  props: {
+    formType: {}
+  },
+  components: {
+    Upload
+  },
+  data() {
+    var number = (rule, value, callback) => {
+      if (!/^(([0-9]+\.[0-9]*[1-9][0-9]*)|([0-9]*[1-9][0-9]*\.[0-9]+)|([0-9]*[1-9][0-9]*)|([0-9]*))$/.test(value)) {
+        callback(new Error('请输入正确的数值'))
+      } else {
+        callback()
+      }
+    }
+    var int = (rule, value, callback) => {
+      if (!/^\+?[1-9][0-9]*$/.test(value)) {
+        callback(new Error('请输入正确的整数数值'))
+      } else {
+        callback()
+      }
+    }
+    return {
+      prizeDrawItem: {
+        rank: '',
+        prizeName: '',
+        prizeNum: '',
+        prizeImg: '',
+        prizeImgSquare: ''
+      },
+      dataRule: {
+        prizeName: [
+          { required: true, message: '奖品名不能为空', trigger: 'blur' }
+        ],
+        prizeNum: [
+          { required: true, message: '总数量为必填项', trigger: 'blur' },
+          { validator: int, trigger: 'blur'}
+        ]
+      }
+    }
+  },
+  methods: {
+    init(data) {
+      const _data = data ? data : []
+      this.prizeDrawItem.rank = data.rank ? data.rank : ''
+      this.prizeDrawItem.prizeName = data.prizeName ? data.prizeName : ''
+      this.prizeDrawItem.prizeNum = data.prizeNum ? data.prizeNum : ''
+      this.prizeDrawItem.prizeImg = data.prizeImg ? data.prizeImg : ''
+      this.prizeDrawItem.prizeImgSquare = data.prizeImgSquare ? data.prizeImgSquare : ''
+    },
+    // 提交表单
+    submitForm() {
+      this.$refs['prizeDrawItem'].validate((valid) => {
+        this.$emit('success', this.prizeDrawItem)
+      })
+    },
+    // 选择图片
+    chooseImg(data) {
+      this.prizeDrawItem.prizeImg = data
+    },
+    chooseImg_imgUrlSquare(data) {
+      this.prizeDrawItem.prizeImgSquare = data
+    },
+    close() {
+      this.$emit('close')
+    }
+  },
+  mounted() {
+  }
+}
+</script>
+<style lang="scss">
+.prizeDrawItem{
+  .avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar-uploader .el-upload:hover {
+    border-color: #409EFF;
+  }
+  .avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 178px;
+    height: 178px;
+    line-height: 178px;
+    text-align: center;
+  }
+  .avatar {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+}
+</style>

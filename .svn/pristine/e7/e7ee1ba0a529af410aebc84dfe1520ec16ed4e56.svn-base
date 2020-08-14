@@ -1,0 +1,225 @@
+<template>
+  <div>
+    <el-row :gutter="15">
+      <el-col :span="24">
+        <el-card shadow="never">
+          <el-form @submit.native.prevent :inline="true">
+            <el-form-item>
+              <p class="main_header">促销审批列表</p>
+            </el-form-item>
+            <el-form-item style="float: right">
+              <el-button type="text" @click="search"><svg-icon icon-class="search"/></el-button>
+            </el-form-item>
+            <el-form-item style="float: right" label="请输入促销活动名称">
+              <el-input
+                placeholder="请输入促销活动名称"
+                v-model="searchName"
+                @keydown.enter.prevent.native="search"
+                @clear="search"
+                clearable>
+              </el-input>
+            </el-form-item>
+          </el-form>
+          <el-table :data="tableList" v-loading="listLoading" @filter-change="filterTag" element-loading-text="拼命加载中">
+            <el-table-column prop="name" label="名称" align="center" header-align="center">
+              <template slot-scope="scope">
+                <span style="color: #1890ff; cursor:pointer;" @click="lookDetail(scope.row)">{{ scope.row.name }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="beginTime" label="活动时间" align="center" header-align="center" width="300">
+              <template slot-scope="scope">
+                  <p style="margin: 0">活动开始时间：{{ timeChange('Y-m-d H:i:s', scope.row.startTime) }}</p>
+                  <p style="margin: 0">活动结束时间：{{ timeChange('Y-m-d H:i:s', scope.row.endTime) }}</p>
+                  <p style="margin: 0">凭证使用开始时间：{{ timeChange('Y-m-d H:i:s', scope.row.startUseTime) }}</p>
+                  <p style="margin: 0">凭证使用结束时间：{{ timeChange('Y-m-d H:i:s', scope.row.endUseTime) }}</p>
+              </template>
+            </el-table-column>
+            <el-table-column prop="imgUrl" label="主图" align="center" header-align="center" width="200">
+              <template slot-scope="scope">
+                  <img :src="scope.row.imgUrl" alt="" style="max-width: 100%;">
+              </template>
+            </el-table-column>
+            <el-table-column prop="price" label="出售信息" align="center" header-align="center" width="200">
+              <template slot-scope="scope">
+                  <p style="margin: 0">促销价格： ￥{{scope.row.price/100}}</p>
+                  <p style="margin: 0">原始价格： ￥{{scope.row.showPrice/100}}</p>
+                  <p style="margin: 0">促销数量： {{scope.row.totalNum}}</p>
+                  <p style="margin: 0">最大购买数量： {{scope.row.totalCanBuy}}</p>
+                  <p v-if="scope.row.resellPrice" style="margin: 0">分销价格：￥{{scope.row.resellPrice / 100}}</p>
+              </template>
+            </el-table-column>
+            <el-table-column 
+              prop="state" 
+              :label="filterState" 
+              header-align="center" 
+              align="center"
+              :filter-multiple="false"
+              column-key="state"
+              :filters="[
+                { text: '待审批', value: 1 },
+                { text: '已通过', value: 101 },
+                { text: '已拒绝', value: 201 }
+              ]"
+            >
+              <template slot-scope="scope">
+                <el-tag type="info" v-if="scope.row.state == 1">待审批</el-tag>
+                <el-tag type="success" v-if="scope.row.state == 101">已通过</el-tag>
+                <el-tag type="danger" v-if="scope.row.state == 201">已拒绝</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" align="center" header-align="center" v-if="isAuth('/showToCApproval/deal')">
+              <template slot-scope="scope">
+                <el-button
+                  size="mini"
+                  type="text"
+                  v-if="scope.row.state == 1"
+                  @click="getcheck(scope.row, true)">同意
+                </el-button>
+                <el-button
+                  size="mini"
+                  type="text"
+                  v-if="scope.row.state == 1"
+                  @click="getcheck(scope.row, false)">拒绝
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <!--工具条-->
+          <el-pagination
+            layout="total, prev, pager, next"
+            background
+            :page-size="pageSize"
+            :total="total"
+            style="text-align:center;"
+            @current-change="handleCurrentChange"
+          />
+        </el-card>
+      </el-col>
+    </el-row>
+    <!-- 查看详情弹窗 -->
+    <el-dialog title="查看详情" :visible.sync="getDetail" :modal="true"  width="500px">
+      <pmSale v-if="getDetail" ref="pmSaleDetail"/>
+    </el-dialog>
+  </div>
+</template>
+<script>
+import pmSale from '../preview/pmSale'
+export default {
+  props: {
+    activityType: {}
+  },
+  data() {
+    return {
+      tableList: [],
+      listLoading: true,
+      total: 0,
+      page: 1,
+      pageSize: 10,
+      chooseId: '',
+      state: '',
+      searchName: '',
+      filterState: '筛选',
+      getDetail: false
+    }
+  },
+  components: {
+    pmSale
+  },
+  methods: {
+    // 点击预览
+    lookDetail(data) {
+      this.getDetail = true
+      this.$nextTick(() => {
+        this.$refs.pmSaleDetail.activity_id = data.activityId
+        this.$refs.pmSaleDetail.getDataList();
+      })
+    },
+    // 筛选
+    filterTag(data) {
+      this.state = data.state[0]
+      this.page = 1
+      this.getDataList()
+    },
+    search() {
+      this.page = 1
+      this.getDataList()
+    },
+    getDataList() {
+      this.listLoading = true
+      const url = this.apiList.showToCApproval.list
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ page: this.page, size: this.pageSize, nameLike: this.searchName, activityType: this.activityType, state:this.state }, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.tableList = data.data.records
+          this.total = data.data.total
+          switch (this.useState) {
+            case 1:
+              this.filterState = `待审批(${ this.total })`
+              break
+            case 101:
+              this.filterState = `已通过(${ this.total })`
+              break
+            case 201:
+              this.filterState = `已拒绝(${ this.total })`
+              break
+            default:
+              this.filterState = '筛选'
+              break
+          }
+        }
+        this.listLoading = false
+      }).catch(() => {
+        this.listLoading = false
+      })
+    },
+    // 分页组件切换
+    handleCurrentChange(value) {
+      this.page = value
+      this.getDataList()
+    },
+    // 审批
+    getcheck(data, state) {
+      if (state) {
+        this.sendCheckAjax(data.id, true, '')
+      } else {
+        this.$prompt('请输入拒绝理由', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputPattern: /^[\s\S]*.*[^\s][\s\S]*$/,
+        inputErrorMessage: '请输入拒绝理由'
+      }).then(({ value }) => {
+        this.sendCheckAjax(data.id, false, value)
+      })
+      }
+    },
+    // 发送审批请求
+    sendCheckAjax(approvalId, agree, refuseRemark) {
+      const url = this.apiList.showToCApproval.check
+      const formdata = {
+        approvalId: approvalId,
+        agree: agree,
+        refuseRemark: refuseRemark
+      }
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData(formdata, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.$message({
+            message: '数据提交成功',
+            type: 'success'
+          })
+          this.getDataList()
+        }
+      })
+    }
+  },
+  created() {
+    this.getDataList()
+  }
+}
+</script>

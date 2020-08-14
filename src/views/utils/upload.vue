@@ -1,0 +1,189 @@
+<template>
+<div class="update">
+  <!-- 通过input获取文件 ，为了美观使用v-show="false" 将input隐藏 通过input的change事件绑定fileChange-->
+  <input type="file" v-show="false" accept="image" ref="input" @change="fileChange($event.target.files)" />
+  <div @click="$refs.input.click()">
+    <slot></slot>
+  </div>
+  <el-dialog :visible.sync="popupVisible" append-to-body>
+    <div class="cut" v-loading="loading">
+      <vue-cropper ref="cropper" 
+        :img="option.img" 
+        :output-size="option.size" 
+        :output-type="option.outputType" 
+        :info="true" :full="option.full"
+        :can-move="option.canMove" 
+        :can-move-box="option.canMoveBox" 
+        :fixed="true" 
+        :fixedNumber="[width, height]"
+        :original="option.original"
+        :auto-crop="option.autoCrop" 
+        :auto-crop-width="_width" 
+        :auto-crop-height="height" 
+        :center-box="option.centerBox"
+        @real-time="realTime" 
+        :high="option.high"
+      />
+      <div class="show-preview" :style="{'width': previews.w + 'px', 'height': previews.h + 'px',  'overflow': 'hidden', 'margin': '5px auto'}">
+        <div :style="previews.div">
+          <img :src="previews.url" :style="previews.img">
+        </div>
+      </div>
+    </div>
+    <el-button type="primary" size="large" @click="finish('base64')">确认</el-button>
+  </el-dialog>
+</div>
+</template>
+<script>
+import sha256 from 'sha256'
+export default {
+  props: {
+    width: {},
+    height: {}
+  },
+  data() {
+    return {
+      model: false,
+      modelSrc: '',
+      crap: false,
+      loading: false,
+      previews: {},
+      filesName: '',
+      _width: 0,
+      option: {
+        img: '',
+        size: 3,
+        full: true,
+        outputType: 'png',
+        canMove: true,
+        fixedBox: true,
+        original: false,
+        canMoveBox: true,
+        autoCrop: true,
+        // 只有自动截图开启 宽度高度才生效
+        // autoCropWidth: 200,
+        // autoCropHeight: 150,
+        centerBox: false,
+        high: true
+      },
+      style: '',
+      previews: {},
+      popupVisible: false
+    }
+  },
+  methods: {
+    fileChange(files) {
+      if(files[0].size > 1024*1024*20) {
+        return this.$message.error('图片大小超过20M了')
+      }
+      this.filesName = files[0].name
+      this.option.img = window.URL.createObjectURL(files[0])
+      this.popupVisible = true
+      this.$refs.input.value = null
+    },
+    dataURLtoFile(dataurl, filename) {//将base64转换为文件
+        var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1]
+        //     bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n)
+        // while(n--){
+        //     u8arr[n] = bstr.charCodeAt(n);
+        // }
+        // return new File([u8arr], filename, {type:mime});
+      const bytes = window.atob(dataurl.split(',')[1])       //去掉url的头，并转换为byte  
+
+      var ab = new ArrayBuffer(bytes.length);  
+      var ia = new Uint8Array(ab);  
+      for (var i = 0; i < bytes.length; i++) {  
+          ia[i] = bytes.charCodeAt(i);  
+      } 
+      return new Blob( [ab] , {type : mime});  
+    },
+    upload() {
+      const formData = new FormData()
+      console.log(this.modelSrc)
+      const file = this.dataURLtoFile(this.modelSrc, this.filesName)
+      formData.append('file', file)
+      formData.append('userId', this.$cookie.get('uid'))
+      formData.append('sign', sha256(this.apiList.upload + this.$cookie.get('token')))
+      // 显示loading
+      this.loading = true
+      this.$http({
+        url: this.$http.adornUrl(this.apiList.upload),
+        method: 'post',
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        data: formData
+      }).then(({ data }) => {
+        this.loading = false
+        this.popupVisible = false
+        if (data.result) {
+          this.$emit('fileChange', data.data)
+        } else {
+          // this.MessageBox('提示', data.msg)
+        }
+      }).catch(() => {
+      })
+    },
+    realTime(data) {
+      this.previews = data
+      console.log(data)
+    },
+    finish(type) {
+      this.$refs.cropper.getCropData((data) => {
+        this.model = true
+        this.modelSrc = data
+        console.log(this.modelSrc)
+        this.upload()
+      })
+    }
+  },
+  created() {
+    if (this.height > 325) {
+      this._width = 325 / this.height * this.width
+    } else {
+      this._width = this.width
+    }
+  }
+}
+</script>
+<style lang="scss">
+.crop-info{
+  display: none;
+}
+.update{
+  display: inline-block;
+  width: 148px;
+  height: 148px;
+  box-sizing: border-box;
+  margin: 0 0 8px 0;
+  vertical-align: top;
+  text-align: center;
+  line-height: 146px;
+  border-radius: 6px;
+  border: 1px dashed #c0ccda;
+}
+.cut{
+  // width: 375px;
+  height: auto;
+  min-height: 275px;
+  .btnContainer{
+    box-sizing: border-box;
+    padding: 15px;
+  }
+  .vue-cropper{
+    height: 325px;
+    // display: inline-block;
+    // vertical-align: middle;
+    // width: 375px;
+    // height: 30%;
+  }
+}
+.show-preview{
+  // display: inline-block;
+  // vertical-align: middle;
+}
+.update:hover{
+  border-color: #409eff;
+  color: #409eff;
+}
+</style>

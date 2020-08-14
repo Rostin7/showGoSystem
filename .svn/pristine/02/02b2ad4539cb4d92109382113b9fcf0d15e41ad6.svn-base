@@ -1,0 +1,77 @@
+<template>
+  <div class="">
+    <p class="img_size_text" v-if="img || imgUrl" style="word-break: break-all;">小程序码 <copy :copyValue="img ? img : imgUrl"/></p>
+    <p class="img_size_text" v-else style="word-break: break-all;"> <el-button type="text" @click="getCode">生成小程序码</el-button></p>
+    <p class="img_size_text" v-if="code || miniAppUrl" style="word-break: break-all;">小程序链接 <copy :copyValue="code ? code : miniAppUrl"/></p>
+    <p class="img_size_text" v-else style="word-break: break-all;"><el-button type="text" @click="getUrl">生成小程序链接</el-button> </p>
+  </div>
+</template>
+<script>
+import {getFullData, getWxAppEr} from './fullData'
+import copy from '../../utils/copy'
+export default {
+  props: {
+    img: '',
+    code: '',
+    type: '',
+    targetId: ''
+  },
+  data() {
+    return {
+      imgUrl: '',
+      miniAppUrl: ''
+    }
+  },
+  components: {
+    copy
+  },
+  methods: {
+    getSareData() {
+      const vm = this
+      const formData = {
+        targetType: 3011,
+        targetId: vm.targetId,
+        type: 'wxMiniUrlCode'
+      }
+      switch (this.type) {
+        case 301:
+          formData.targetType = 3011
+          break
+        case 101:
+          formData.targetType = 3012
+          break
+        case 201:
+          formData.targetType = 3013
+          break
+        case 501:
+          formData.targetType = 3015
+          break
+        case 601:
+          formData.targetType = 3016
+          break
+        case 701:
+          formData.targetType = 3017
+          break
+        
+      }
+      return formData
+    },
+    // 生成小程序码
+    getCode() {
+      getFullData(this.getSareData()).then(( fullData ) => {
+        getWxAppEr(fullData).then(( data ) => {
+          this.imgUrl = data
+          this.$emit('getWxAppEr', {targetId: this.targetId, code: this.imgUrl })
+        })
+      })
+    },
+    // 生成小程序链接
+    getUrl() {
+      getFullData(this.getSareData()).then(( data ) => {
+        this.miniAppUrl = `pages/index/index?CustomVariablea=${data}`
+        this.$emit('getminiAppUrl', {targetId: this.targetId, code: this.miniAppUrl })
+      })
+    }
+  }
+}
+</script>

@@ -1,0 +1,221 @@
+<template>
+  <div class="editor">
+    <!-- <quill-editor ref="myTextEditor"
+      v-model="content"
+      :options="quillOption"
+      @change="onEditorBlur($event)"
+    /> -->
+    <vue-neditor-wrap v-model="content" :config="myConfig" :destroy="true" v-loading="isUploadImg" @ready="ready"></vue-neditor-wrap>
+  </div>
+</template>
+<script>
+import VueNeditorWrap from 'vue-neditor-wrap'
+// import 'quill/dist/quill.core.css'
+// import 'quill/dist/quill.snow.css'
+// import 'quill/dist/quill.bubble.css'
+import { Base64 } from 'js-base64'
+// import { quillEditor } from 'vue-quill-editor'
+// import quillConfig from './quill-config.js'
+export default {
+  props: {
+    pro_content: {}
+  },
+  data () {
+    return {
+      isUploadImg: true,
+      isready: false,
+      hasContent: false,
+      notRender: true,
+      myConfig: {
+        // 如果需要上传功能,找后端小伙伴要服务器接口地址
+        serverUrl: '/api/web/upload/ueditor',
+        // 你的UEditor资源存放的路径,相对于打包后的index.html
+        UEDITOR_HOME_URL: '/NEditor/',
+        // 编辑器不自动被内容撑高
+        autoHeightEnabled: false,
+        // 初始容器高度
+        initialFrameHeight: '500',
+        // 初始容器宽度
+        initialFrameWidth: '500',
+        // 关闭自动保存
+        enableAutoSave: false
+      },
+      content: '',
+    }
+  },
+  components: {
+    VueNeditorWrap
+  },
+  methods: {
+    onEditorBlur() {
+      // this.$emit('contentChange', Base64.encode(this.content))
+    },
+    ready(data) {
+      this.isready = true
+      if (this.hasContent) {
+        this.content = Base64.decode(this.pro_content)
+        // this.changeData()
+        this.changeFile()
+      }
+      // this.content = this.content ? this.content : Base64.decode(this.pro_content)
+    },
+    changeCopyData(e) {
+      if (e.ctrlKey) {
+      }
+    },
+    // 将字符串转为dom节点
+    parseDom(arg) {
+  　　 var objE = document.createElement("div")
+  　　 objE.innerHTML = arg
+  　　 return objE
+    },
+    // 复制的富文本图片资源上传修改
+    changeFile() {
+      // 获得网络图片路径
+      let remoteImages = [],
+      dom = this.parseDom(this.content),
+      imgs = dom.querySelectorAll('[style*="url"],img'),
+      // 对抓取的图片路径进行过滤验证
+      catcherLocalDomain = ["https://zxlmain.oss-cn-hangzhou.aliyuncs.com"],
+      test = function(src, urls) {
+        if (src.indexOf(location.host) != -1 || /(^\.)|(^\/)/.test(src)) {
+          return true;
+        }
+        if (urls) {
+          for (let j = 0, url; (url = urls[j++]); ) {
+            if (src.indexOf(url) !== -1) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+      for (let i = 0, ci; (ci = imgs[i++]); ) {
+        console.log(ci.attributes.width> 300)
+        if (ci.style.width && parseInt(ci.style.width) > 300) {
+          // 图片的宽度溢出则判断有没有高度
+          console.log('32323223')
+          this.replace(ci)
+        }
+        if (ci.getAttribute("word_img")) {
+          continue;
+        }
+        if(ci.nodeName == "IMG"){
+          let src = ci.getAttribute("_src") || ci.src || "";
+          if (/^(https?|ftp):/i.test(src) && !test(src, catcherLocalDomain)) {
+            remoteImages.push(src);
+          }
+        } else {
+          // 获取背景图片url
+          let backgroundImageurl = ci.style.cssText.replace(/.*\s?url\([\'\"]?/, '').replace(/[\'\"]?\).*/, '');
+          if (/^(https?|ftp):/i.test(backgroundImageurl) && !test(backgroundImageurl, catcherLocalDomain)) {
+            remoteImages.push(backgroundImageurl);
+          }
+        }
+      }
+      // return remoteImages
+      remoteImages.forEach(item => {
+        this.uploadFile (item)
+      })
+    },
+    // 将图片上传到服务器并替换调原文件路径
+    uploadFile (fileUrl) {
+      const url = this.apiList.uploadOnline
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ fileUrl: fileUrl }, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          const url_ = fileUrl.replace('http:', '')
+          if (this.content.indexOf(fileUrl) !== -1) {
+            this.content = this.content.replace(fileUrl, data.data)
+          } else if (this.content.indexOf(url_) !== -1){
+            this.content = this.content.replace(url_, data.data)
+          }
+        }
+      })
+    },
+    // 替换dom的宽高样式
+    replace(ci) {
+      const div = document.createElement("div")
+      div.appendChild(ci)
+      let str = div.innerHTML
+      let str2 = str
+      if (str.indexOf('img') > -1 ) {
+        str = str.substring(0, str.length-1)
+      }
+      const reg2 = /height=" (\d*)(.?)(\d+)px/g
+      str2 = str2.replace(reg2, ' ')
+      // this.content = this.content.replace(str, str2)
+      console.log(str2)
+      // console.log(this.content)
+    },
+    // 将提交的数据进行对应的转换
+    changeData(data) {
+      // 将所有的section 替换成 div
+      const reg = /section/g
+      const reg2 = /width: (\d*)(.?)(\d+)px/g
+      // const reg3 = /height: (\d*)(.?)(\d+)px/g
+      let str = data.replace(reg, 'div')
+      const arr = str.match(reg2)
+      // const arr2 = str.match(reg3)
+      if (arr) {
+        arr.forEach(element => {
+          const eleStr = element.split('width:')[1]
+          if (parseInt(eleStr) > 300) {
+            str = str.replace(element, 'width: 100%')
+          }
+        })
+      }
+      // if (arr2) {
+      //   arr2.forEach(element => {
+      //     const eleStr = element.split('height:')[1]
+      //     str = str.replace(element, 'height: auto')
+      //   })
+      // }
+      return(Base64.encode(str))
+    }
+  },
+  watch: {
+    content: function () {
+      this.changeFile()
+      this.$emit('contentChange', this.changeData(this.content))
+    },
+    pro_content: function () {
+      // 初始化赋值
+      if (this.pro_content && this.notRender) {
+        this.notRender = false
+        if (this.isready) {
+          this.content = Base64.decode(this.pro_content)
+          this.changeFile()
+        } else {
+          this.hasContent = true
+        }
+      }
+    }
+  }
+}
+</script>
+<style lang="scss">
+.editor{
+  max-width: 500px;
+  // 添加富文本样式
+  img{
+    max-width: 100%;
+  }
+  video{
+    max-width: 100%;
+  }
+}
+.text_info{
+  font-size: 12px;
+  color: #E51D27;
+  height: 12px;
+  line-height: 12px;
+  position: absolute;
+  bottom: -6px;
+  left: 160px;
+  z-index: 6100;
+}
+</style>

@@ -1,0 +1,151 @@
+// cover some element-ui styles
+
+.el-breadcrumb__inner,
+.el-breadcrumb__inner a {
+  font-weight: 400 !important;
+  color: #fff!important;
+}
+
+.el-upload {
+  input[type="file"] {
+    display: none !important;
+  }
+}
+
+.el-upload__input {
+  display: none;
+}
+
+.cell {
+  .el-tag {
+    margin-right: 0px;
+    cursor: pointer;
+  }
+  .danger {
+    color: #e51d27;
+  }
+}
+// 表格样式
+.small-padding {
+  .cell {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+}
+.el-table{
+  border: solid 1px #e5e5e5;
+  border-bottom: 0;
+  thead{
+    font-weight: 600;
+    color: #333;
+  }
+  .el-table__row:nth-child(odd){
+    background: #fafafa;
+  }
+  .tableUserAva{
+    width: 32px;
+  }
+  .el-button + .el-button{
+    margin-left: 0;
+  }
+  .userAvatar{
+    width: 39px;
+    height: 39px;
+    border-radius: 50%;
+  }
+}
+// 分页组件
+// 当前页
+.el-pagination.is-background .el-pager li:not(.disabled).active{
+  background-color: #fff;
+  color: #333;
+  font-weight: 600;
+  border: none;
+}
+// 全部页
+.el-pagination.is-background .btn-prev, .el-pagination.is-background .btn-next, .el-pagination.is-background .el-pager li{
+  background-color: #fff;
+  color: #666;
+  border: solid 1px #d7d7d7;
+}
+// 调用editor页面的弹窗效果
+.editor_index{
+  // z-index: 2003!important;
+  .el-dialog{
+    margin-top: 10vh!important;
+  }
+}
+
+
+.fixed-width {
+  .el-button--mini {
+    padding: 7px 10px;
+    width: 60px;
+  }
+}
+
+.status-col {
+  .cell {
+    padding: 0 10px;
+    text-align: center;
+
+    .el-tag {
+      margin-right: 0px;
+    }
+  }
+}
+
+// to fixed https://github.com/ElemeFE/element/issues/2461
+.el-dialog {
+  transform: none;
+  left: 0;
+  position: relative;
+  margin: 0 auto;
+}
+
+// refine element ui upload
+.upload-container {
+  .el-upload {
+    width: 100%;
+
+    .el-upload-dragger {
+      width: 100%;
+      height: 200px;
+    }
+  }
+}
+
+// dropdown
+.el-dropdown-menu {
+  a {
+    display: block
+  }
+}
+
+// fix date-picker ui bug in filter-item
+.el-range-editor.el-input__inner {
+  display: inline-flex !important;
+}
+.el-card__body{
+  .main_header{
+    font-size: 24px;
+    color: #666;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 30px;
+  }
+}
+.el-pagination{
+  margin-top: 15px;
+}
+
+// 侧边弹出层样式
+.el-menu--vertical{
+  z-index: 6999!important;
+}
+.el-notification{
+  z-index: 8000!important;
+}
+.el-message{
+  z-index: 8000!important;
+}

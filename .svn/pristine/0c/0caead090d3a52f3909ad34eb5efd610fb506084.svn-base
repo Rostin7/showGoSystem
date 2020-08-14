@@ -1,0 +1,415 @@
+<!-- 店铺管理 -->
+<template>
+<div class="moduleShop app-container">
+  <el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
+    <el-form @submit.native.prevent :inline="true">
+      <!-- <el-form-item>
+        <city-list @chooseCity="changeData"></city-list>
+      </el-form-item> -->
+      <el-form-item>
+        <el-button @click.native = "addModel" v-if="isAuth('/moduleShop/add')">添加店铺</el-button>
+      </el-form-item>
+    </el-form>
+  </el-col>
+  <!-- 数据表格 -->
+  
+  <el-table :data="tableList" v-loading="listLoading" border element-loading-text="拼命加载中">
+    <el-table-column  prop="id" label="#ID"></el-table-column>
+    <el-table-column  prop="name" label="店铺名称"></el-table-column>
+    <el-table-column  prop="createdAt" label="添加时间"></el-table-column>
+    <el-table-column  prop="moduleType" label="类型">
+    </el-table-column>
+    <el-table-column label="操作" width="260">
+      <template slot-scope="scope">
+        <el-button
+          size="mini"
+          @click="getUrl(scope.$index, scope.row)"
+        >
+          预览
+        </el-button>
+        <el-button
+          v-if="isAuth('/shopPhotoShow/listByTypeAndTargetId')"
+          size="mini"
+          @click="more(scope.$index, scope.row)">更多管理</el-button>
+        <el-button
+          v-if="false"
+          size="mini"
+          type="primary"
+          @click="">修改</el-button>
+        <el-button
+          v-if="isAuth('/moduleShop/del')"
+          size="mini"
+          type="danger"
+          @click="submitDelete(scope.$index, scope.row)">删除</el-button>
+        </template>
+    </el-table-column>
+  </el-table>
+  <!-- 表格分页 -->
+  <!-- 修改和增加 -->
+  <el-dialog :title="dialogTitle" :visible.sync="dialogFormVisible" :modal="true"  width="60%">
+    <el-form @submit.native.prevent :model="modelForm" :rules="dataRule" ref="mallForm">
+      <el-form-item label="名称" :label-width="formLabelWidth" prop="name">
+        <el-input v-model="modelForm.name" autocomplete="off"></el-input>
+      </el-form-item>
+      <el-form-item label="电话号码" v-if="!isEdit" :label-width="formLabelWidth"  prop="phoneNum">
+        <el-input v-model="modelForm.phoneNum" autocomplete="off"></el-input>
+      </el-form-item>
+    </el-form>
+    <span slot="footer" class="dialog-footer">
+      <el-button @click="dialogFormVisible = false">取 消</el-button>
+      <el-button type="primary" @click="submitFormAdd">确 定</el-button>
+    </span>
+  </el-dialog>
+</div>
+</template>
+<script>
+// import CityList from '../cityList'
+import { eventBus } from '@/eventBus'
+import { treeDataTranslate } from '@/utils/getTree'
+import 'quill/dist/quill.core.css'
+import 'quill/dist/quill.snow.css'
+import 'quill/dist/quill.bubble.css'
+import { quillEditor } from 'vue-quill-editor'
+import { Base64 } from 'js-base64'
+import moduleList from '../../../utils/module.js'
+export default {
+  data() {
+    var phone = (rule, value, callback) => {
+      if (!(/^1[3456789]\d{9}$/.test(value))) {
+        callback(new Error('电话号码格式错误'))
+      } else {
+        callback()
+      }
+    }
+    return {
+      // 树形图结构
+      content: '',
+      editorOption: {
+        placeholder: '文字说明'
+      },
+      defaultProps: {
+        children: 'children',
+        label: 'name'
+      },
+      isGetTags: false, // 是否获得tag数据
+      defaultMallType: [], // 默认商场类型展开
+      defaultMallTypeCheck: [], // 默认商场类型选中
+      defaultChildType: [], // 默认儿童类型展开
+      defaultChildTypeCheck: [], // 默认儿童类型选中
+      dialogTitle: '添加新店铺',
+      dialogFormVisible: false,
+      cityId: this.$cookie.get('moduleId'),
+      tableList: [],
+      listLoading: true,
+      mallModuleId: 0,
+      isEdit: false,
+      formLabelWidth: '120px',
+      mallList: [], // 广场列表
+      mallTypeList: [], // 广场分类列表
+      childTypeList: [], // 儿童分类列表
+      childTypeList_: [],
+      Tags: [], // tag列表
+      modelForm: {
+        name: '',
+        lat: '',
+        lng: '',
+        tags: [],
+        phoneNum: '',
+        show: false
+      },
+      dataRule: {
+        name: [
+          { required: true, message: '用户名不能为空', trigger: 'blur' }
+        ],
+        phoneNum: [
+          { required: true, message: '电话号码不能为空', trigger: 'blur' },
+          { validator: phone, message: '电话号码错误', trigger: 'blur' }
+        ],
+        shopPhoneNum: [
+          { required: true, message: '电话号码不能为空', trigger: 'blur' },
+          { validator: phone, message: '电话号码错误', trigger: 'blur' }
+        ]
+      }
+    }
+  },
+  components: {
+    // CityList,
+    quillEditor
+  },
+  methods: {
+    addModel(index, data) {
+      this.isEdit = false// 添加状态
+      this.content = ''
+      this.modelForm = {
+        name: '',
+        lat: '',
+        lng: '',
+        show: false,
+        moduleId: this.cityId
+      }
+      if (data) {
+        this.modelForm = {
+          name: data.name,
+          targetModuleId: data.id,
+          lat: '',
+          lng: '',
+          logoUrl: '',
+          show: false,
+          showMall: false,
+          showChild: false,
+          moduleId: data.id,
+          address: '',
+          shopPhoneNum: '',
+          tagIds: [],
+          mallModuleId: data.mallModuleId ? data.mallModuleId : 0, // 商场ID
+          groupIds: []
+        }
+        this.getMall()
+        this.getMallType()
+        this.getChildType()
+        this.getTags()
+        this.getDetail(this.modelForm.targetModuleId)
+        this.isEdit = true// 修改状态
+      }
+      this.dialogFormVisible = true
+    },
+    // 点击提交
+    submitFormAdd() {
+      let url
+      if (this.isEdit) {
+        url = this.apiList.module.moduleShop.edit
+        this.modelForm.shopDesc = Base64.encode(this.content)
+      } else {
+        url = this.apiList.module.moduleShop.add
+      }
+      this.$refs['mallForm'].validate((valid) => {
+        if (valid) {
+          const submitData = this.modelForm
+          if (url === this.apiList.module.moduleShop.edit) {
+            if (submitData.groupIds.length !== 0) {
+              submitData.groupIds = submitData.groupIds.join(',')
+            }
+            if (submitData.tagIds.length !== 0) {
+              submitData.tagIds = submitData.tagIds.join(',')
+            }
+          }
+          this.$http({
+            url: this.$http.adornUrl(url),
+            method: 'post',
+            data: this.$http.adornData(submitData, url, true)
+          }).then(({ data }) => {
+            if (data.result) {
+              this.$message({ type: 'success', message: '提交成功' })
+              this.getDataList()
+            } else {
+              // this.$message({ message: data.msg, type: 'warning' })
+              // this.$store.dispatch('LogOut')
+            }
+            // 关闭弹出层
+            this.dialogFormVisible = false
+          })
+        }
+      })
+      // 提交成功刷新数据
+      this.getDataList()
+    },
+    changeData(cityId) {
+      this.cityId = cityId[cityId.length - 1]
+      // 刷新数据
+      this.getDataList()
+    },
+    // 请求数据列表
+    getDataList() {
+      this.listLoading = true
+      this.$http({
+        url: this.$http.adornUrl(this.apiList.module.moduleShop.listAll),
+        method: 'post',
+        data: this.$http.adornData({ moduleId: this.cityId }, this.apiList.module.moduleShop.listAll, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.tableList = data.data
+        }
+        this.listLoading = false
+      }).catch(() => {
+        // this.$message.error('未知错误')
+        this.listLoading = false
+      })
+    },
+    // 请求店铺详情
+    getDetail(shopId) {
+      this.defaultMallTypeCheck = []
+      this.defaultChildTypeCheck = []
+      this.$http({
+        url: this.$http.adornUrl(this.apiList.module.moduleShop.getDetail),
+        method: 'post',
+        data: this.$http.adornData({ moduleId: shopId }, this.apiList.module.moduleShop.getDetail, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.modelForm.logoUrl = data.data.logoImgUrl
+          this.modelForm.show = data.data.showed
+          this.modelForm.showMall = !(data.data.mallModuleId === 0)
+          this.modelForm.mallModuleId = data.data.mallModuleId ? data.data.mallModuleId : 0
+          this.modelForm.groupIds = data.data.groupIds ? data.data.groupIds.split(',') : []
+          // 初始化树形图选择
+          this.modelForm.shopPhoneNum = data.data.shopPhoneNum ? data.data.shopPhoneNum : ''
+          this.modelForm.address = data.data.address ? data.data.address : ''
+          this.defaultMallTypeCheck = this.modelForm.groupIds
+          this.defaultChildTypeCheck = this.modelForm.groupIds
+          // 初始化复选框选择
+          this.modelForm.tagIds = data.data.tagIds ? data.data.tagIds.split(',') : []
+          console.log(this.modelForm.tagIds)
+          // 展示数据
+          this.content = Base64.decode(data.data.shopDesc)
+          this.childTypeList_.some((item) => {
+            if (this.modelForm.groupIds.findIndex(v => v === item.id.toString()) > -1) {
+              this.modelForm.showChild = true
+            }
+          })
+        } else {
+          // this.$message.error(data.msg)
+        }
+      }).catch(() => {
+        // this.$message.error('未知错误')
+      })
+    },
+    // 请求广场
+    getMall() {
+      this.$http({
+        url: this.$http.adornUrl(this.apiList.module.moduleShop.listMall),
+        method: 'post',
+        data: this.$http.adornData({ moduleId: this.cityId }, this.apiList.module.moduleShop.listMall, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.mallList = data.data
+        } else {
+          // this.$message.error(data.msg)
+        }
+      }).catch(() => {
+        // this.$message.error('未知错误')
+      })
+    },
+    // 请求广场类型
+    getMallType() {
+      this.$http({
+        url: this.$http.adornUrl(this.apiList.module.moduleShop.mallType),
+        method: 'post',
+        data: this.$http.adornData({ superId: moduleList.data[0].id, all: true }, this.apiList.module.moduleShop.mallType, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.mallTypeList = treeDataTranslate(data.data)
+        } else {
+          // this.$message.error(data.msg)
+        }
+      }).catch(() => {
+        // this.$message.error('未知错误')
+      })
+    },
+    // 请求儿童分类
+    getChildType() {
+      this.$http({
+        url: this.$http.adornUrl(this.apiList.module.moduleShop.childType),
+        method: 'post',
+        data: this.$http.adornData({ superId: moduleList.data[1].id, all: true }, this.apiList.module.moduleShop.childType, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          // 保存源数据
+          this.childTypeList_ = data.data
+          console.log(this.childTypeList_)
+          this.childTypeList = treeDataTranslate(data.data)
+        } else {
+          // this.$message.error(data.msg)
+        }
+      }).catch(() => {
+        // this.$message.error('未知错误')
+      })
+    },
+    // 请求标签
+    getTags() {
+      // 暂时请求一百个
+      this.isGetTags = false
+      this.$http({
+        url: this.$http.adornUrl(this.apiList.module.moduleShop.tags),
+        method: 'post',
+        data: this.$http.adornData({ page: 1, size: 100 }, this.apiList.module.moduleShop.tags, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.Tags = data.data.records
+        } else {
+          // this.$message({ message: data.msg, type: 'warning' })
+          // this.$store.dispatch('LogOut')
+        }
+        this.isGetTags = true
+      })
+    },
+    checkChange(data, check) {
+      const arr = this.modelForm.groupIds
+      if (check) {
+        arr.push(data.id)
+      } else {
+        arr.splice(arr.findIndex(v => v === data.id), 1)
+      }
+      this.modelForm.groupIds = arr
+    },
+    check(a, b, c, d) {},
+    // 点击删除
+    submitDelete(index, data) {
+      // 点击确认删除
+      this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'danger' }
+      ).then(() => {
+        this.$http({
+          url: this.$http.adornUrl(this.apiList.module.moduleShop.del),
+          method: 'post',
+          data: this.$http.adornData({ targetModuleId: data.id }, this.apiList.module.moduleShop.del, true)
+        }).then(({ data }) => {
+          if (data.result) {
+            // 删除成功
+            this.$message({ type: 'success', message: '删除成功' })
+            // 删除当前列表
+            this.tableList.splice(index, 1)
+            this.total --
+          }
+        })
+      }).catch(() => {
+        // this.$message.error('未知错误')
+      })
+    },
+    more(index, data) {
+      this.$router.push({
+        path: '/shopPhotoShow',
+        query: {
+          shopId: data.id
+        }
+      })
+    },
+    getUrl(index, data) {
+      this.$alert(data.name + '访问路径为' + 'https://j.chnzxl.com/#/?shopId=' + data.id, {
+        confirmButtonText: '确定',
+        callback: action => {
+          console.log('1111')
+        }
+      })
+    }
+  },
+  mounted() {
+    const vm = this
+    eventBus.$on('chooseCity', (val) => {
+      vm.changeData(val)
+    })
+    this.getDataList()
+  }
+}
+</script>
+<style>
+.editor-btn{
+    margin-top: 20px;
+}
+.crumbs,.plugins-tips {
+    margin-bottom: 20px
+}
+.ql-picker{
+  line-height: 100%;
+}
+.ql-container{
+  min-height: 200px;
+}
+</style>

@@ -1,0 +1,631 @@
+<template>
+<div class="activityPlanFrom">
+  <el-form @submit.native.prevent :model="activityPlanForm" :rules="dataRule" :inline="false"  ref="activityPlanForm" label-width="110px" class="demo-ruleForm">
+    <el-form-item label="ID" v-show="false">
+      <el-input v-model="activityPlanForm.id" autocomplete="off"></el-input>
+    </el-form-item>
+    <el-form-item label="名称"  prop="name">
+      <el-input v-model="activityPlanForm.name" autocomplete="off"></el-input>
+    </el-form-item>
+    <el-form-item label="活动分组" v-if="!isMarket">
+      <el-radio-group v-model="checkGroupId">
+        <el-radio-button :key="item.id" v-for="item in groupsThird" :label="item.id">{{ item.label }}</el-radio-button>
+      </el-radio-group>
+    </el-form-item>
+    <el-form-item label="联系电话" class="phone">
+      <div class="inline">
+        <el-select v-model="phoneType" placeholder="请选择" @change="enterPhoneNum ='' ; enterPhoneNum_ = ''; enterPhoneNum_2='' ; activityPlanForm.phoneNum ='';">
+          <el-option label="手机号" value="1"></el-option>
+          <el-option label="固定电话" value="2"></el-option>
+          <el-option label="400电话" value="3"></el-option>
+        </el-select>
+      </div>
+      <div class="inline" v-show="phoneType === '1'">
+        <el-row>
+          <el-col :span="24">
+            <el-input type="text" v-model="activityPlanForm.phoneNum" autocomplete="off" maxlength="11"/>
+          </el-col>
+        </el-row>
+      </div>
+      <div class="inline phone" v-show="phoneType === '2'">
+        <el-row>
+          <el-col :span="7">
+            <el-input type="text" v-model="enterPhoneNum" autocomplete="off" maxlength="4"/>
+          </el-col>
+          <el-col :span="2">--</el-col>
+          <el-col :span="15">
+            <el-input type="text" v-model="enterPhoneNum_" autocomplete="off" maxlength="8"/>
+          </el-col>
+        </el-row>
+      </div>
+      <div class="inline phone400" v-show="phoneType === '3'">
+        <el-row>
+          <el-col :span="4">
+            <el-input v-model="enterPhoneNum" autocomplete="off" maxlength="3"/>
+          </el-col>
+          <el-col :span="2">--</el-col>
+          <el-col :span="4">
+            <el-input v-model="enterPhoneNum_" autocomplete="off" maxlength="3"/>
+          </el-col>
+          <el-col :span="2">--</el-col>
+          <el-col :span="6">
+            <el-input v-model="enterPhoneNum_2" autocomplete="off" maxlength="4"/>
+          </el-col>
+        </el-row>
+      </div>
+    </el-form-item>
+    <el-form-item label="联系地址"  prop="address">
+      <el-input v-model="activityPlanForm.address" autocomplete="off"></el-input>
+    </el-form-item>
+    <el-form-item label="详细地址" >
+      <el-input v-model="activityPlanForm.doorAdd" autocomplete="off" placeholder="请输入详细地址"></el-input>
+    </el-form-item>
+    <el-form-item label="地址坐标" >
+      <el-input v-model="activityPlanForm.point" autocomplete="off" placeholder="请选择坐标" :disabled="true"></el-input>
+    </el-form-item>
+    <el-form-item>
+      <div>
+        <map-box :lat="activityPlanForm.lat" :lng="activityPlanForm.lng" :address="activityPlanForm.address" @chooseAddressPoint="chooseAddressPoint" ref="myMap" @getDataList="getAddList"></map-box>
+      </div>
+    </el-form-item>
+    <el-form-item label="活动价格"  prop="price">
+      <el-input v-model="activityPlanForm.price" autocomplete="off" @input="activityPlanForm.moduleGetPrice = Math.round(activityPlanForm.price * Number($cookie.get('moduleGetPrice')) * 100) / 100"></el-input>
+    </el-form-item>
+    <el-form-item label="商户结算价" prop="moduleGetPrice">
+        <el-input v-model="activityPlanForm.moduleGetPrice" :disabled="true" autocomplete="off" ></el-input>
+      </el-form-item>
+    <el-form-item label="库存"  prop="totalNum">
+      <el-input v-model="activityPlanForm.totalNum" autocomplete="off"></el-input>
+    </el-form-item>
+    <el-form-item label="主图">
+      <upload @fileChange="chooseImg" class="avatar-uploader" :width="343" :height="160" style="width: 172px;height: 80px; line-height: 80px">
+        <img v-if="activityPlanForm.imgUrl" :src="activityPlanForm.imgUrl" class="avatar">
+        <i v-else class="el-icon-plus"></i>
+      </upload>
+      <div class="test_container">
+        <span>示例：</span>
+        <img src="../../../assets/test_1.png" alt="">  
+      </div>
+      <div class="img_size_text">推荐尺寸: {{ 343 }} * {{ 160 }}</div>
+    </el-form-item>
+    <!-- 封面 -->
+    <el-form-item label="封面">
+      <upload @fileChange="chooseImg_imgUrlSquare" :width="244" :height="254" style="width: 122px;height: 127px; line-height: 127px">
+        <img v-if="activityPlanForm.imgUrlSquare" :src="activityPlanForm.imgUrlSquare" class="avatar" style="width: 122px;height: 127px">
+        <i v-else class="el-icon-plus"></i>
+      </upload>
+      <div class="test_container">
+        <span>示例：</span>
+        <img class="" src="../../../assets/test_2.png" alt="">  
+      </div>
+      <div class="img_size_text">推荐尺寸: {{ 244 }} * {{ 254 }}</div>
+    </el-form-item>
+    <!-- 海报 -->
+    <el-form-item label="海报">
+      <upload @fileChange="chooseImg_poster" :width="375" :height="667" style="width: 122px;height: 127px; line-height: 127px">
+        <img v-if="activityPlanForm.poster" :src="activityPlanForm.poster" class="avatar" style="width: 122px;height: 127px">
+        <i v-else class="el-icon-plus"></i>
+      </upload>
+      <!-- <div class="test_container">
+        <span>示例：</span>
+        <img class="" src="../../../assets/test_2.png" alt="">  
+      </div> -->
+      <div class="img_size_text">推荐尺寸: {{ 750 }} * {{ 1334 }}</div>
+    </el-form-item>
+    <el-form-item label="上架" >
+      <el-switch
+        v-model="activityPlanForm.showToC">
+      </el-switch>
+    </el-form-item>
+    <el-form-item label="活动时间" prop="time">
+      <el-date-picker
+        v-model="activityPlanForm.time"
+        type="datetimerange"
+        align="right"
+        :editable="false"
+        :time-arrow-control = "true"
+        start-placeholder="开始时间"
+        end-placeholder="结束时间"
+        :default-time="['00:00:00', '00:00:00']">
+      </el-date-picker>
+    </el-form-item>
+    <el-form-item label="凭证使用时间" prop="useTime">
+      <el-date-picker
+        v-model="activityPlanForm.useTime"
+        type="datetimerange"
+        align="right"
+        :editable="false"
+        :time-arrow-control = "true"
+        start-placeholder="开始时间"
+        end-placeholder="结束时间"
+        :default-time="['00:00:00', '00:00:00']">
+      </el-date-picker>
+    </el-form-item>
+    <el-form-item label="风采展示">
+      <photo-show :data="activityPlanForm.photos" @changeData="getPhotoShowData"/>
+    </el-form-item>
+    <el-form-item label="注意事项">
+      <kv-edit :data="activityPlanForm.attention" @changeData="getKvData"/>
+    </el-form-item>
+    <el-form-item label="活动介绍">
+      <quill-editor ref="shopDetailInfo" :pro_content="activityPlanForm.fullText"  @contentChange="fullText_contentChange"/>
+    </el-form-item>
+    <el-form-item label="活动奖品">
+      <quill-editor ref="shopDetailInfo1" :pro_content="activityPlanForm.prizeFullText"  @contentChange="prizeFullText_contentChange"/>
+    </el-form-item>
+    <el-form-item>
+      <el-button type="primary" @click="submitForm">立即提交</el-button>
+      <el-button @click="close">取消</el-button>
+      <el-checkbox style="float: right;" v-if="isNew && isAuth('/activityTemplate/add')" v-model="saveData">保存为新模板</el-checkbox>
+    </el-form-item>
+  </el-form>
+</div>
+</template>
+<script>
+import { timestamp } from '../../../utils/timeChange.js'
+import MapBox from '../../utils/map.vue'
+import Upload from '../../utils/upload.vue'
+import { getGroup, getGroupChild } from '../utils/getGroup.js'
+import PhotoShow from '../enterName/PhotoShow.vue'
+import quillEditor from '../../utils/editor'
+import kvEdit from '../utils/kv'
+export default {
+  props: {
+    form_type: {}
+  },
+  data() {
+    var phone = (rule, value, callback) => {
+      if (!(/^1[3456789]\d{9}$/.test(value))) {
+        callback(new Error('电话号码格式错误'))
+      } else {
+        callback()
+      }
+    }
+    var trim = (rule, value, callback) => {
+      // if (/\s/.test(value)) {
+      //   callback(new Error('输入内容不能含有空格'))
+      // } else {
+      //   callback()
+      // }
+      callback()
+    }
+    var number = (rule, value, callback) => {
+      if (!/^(([0-9]+\.[0-9]*[1-9][0-9]*)|([0-9]*[1-9][0-9]*\.[0-9]+)|([0-9]*[1-9][0-9]*)|([0-9]*))$/.test(value)) {
+        callback(new Error('请输入正确的数值'))
+      } else {
+        callback()
+      }
+    }
+    var int = (rule, value, callback) => {
+      if (!/^\+?[1-9][0-9]*$/.test(value)) {
+        callback(new Error('请输入正确的整数数值'))
+      } else {
+        callback()
+      }
+    }
+    return {
+      width: 444,
+      isNew: true,
+      saveData: false,
+      height: 278,
+      options: [],
+      isMarket: false,
+      phoneType: '1',
+      enterPhoneNum: '',
+      enterPhoneNum_: '',
+      enterPhoneNum_2: '',
+      activityPlanForm: {
+        id: '',
+        moduleGetPrice: '',
+        imgUrl: '',
+        imgUrlSquare: '',
+        name: '',
+        time: [],
+        useTime: [],
+        phoneNum: '',
+        price: '',
+        address: '',
+        lng: '',
+        lat: '',
+        totalNum: '',
+        doorAdd: '',
+        showToC: false,
+        point: '',
+        photos: '',
+        attention: '',
+        fullText: '',
+        prizeFullText: '',
+        poster: '',
+      },
+      // 分组
+      groups: [],
+      groupsThird: [],
+      checkGroupId: '',
+      dataRule: {
+        name: [
+          { required: true, message: '活动名称不能为空', trigger: 'blur' },
+          { validator: trim, trigger: 'blur' }
+        ],
+        endUseTime: [
+          { required: true, message: '结束时间为必填项', trigger: 'blur' }
+        ],
+        time: [
+          { required: true, message: '请选择活动时间', trigger: 'blur' }
+        ],
+        phoneNum: [
+          { required: true, message: '电话号码不能为空', trigger: 'blur' },
+          { validator: phone, trigger: 'blur' }
+        ],
+        price: [
+          { required: true, message: '价格不能为空'},
+          { validator: number, trigger: 'blur'}
+        ],
+        showPrice: [
+          { required: true, message: '价格不能为空'},
+          { validator: number, trigger: 'blur'}
+        ],
+        totalNum: [
+          { required: true, message: '总数量不能为空'},
+          { validator: int, trigger: 'blur'}
+        ],
+        useTime: [
+          { required: true, message: '请选择凭证使用时间', trigger: 'blur' }
+        ],
+        address: [
+          { required: true, message: '请填写活动活动地址', trigger: 'blur' }
+        ]
+      }
+    }
+  },
+  components: {
+    Upload,
+    MapBox,
+    quillEditor,
+    kvEdit,
+    PhotoShow
+  },
+  methods: {
+    // 选取海报
+    chooseImg_poster(data) {
+      this.activityPlanForm.poster = data
+    },
+    init({ data }) {
+      const url = this.apiList.shop.activityPlan.detail
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ id: data.activityId }, url, true)
+      }).then(({ data }) => {
+        if (this.$cookie.get('moduleType') == '301') {
+          this.isMarket = true
+        }
+        this.activityPlanForm.id = data.data.activityId
+        this.activityPlanForm.moduleGetPrice = data.data.moduleGetPrice > 0 ? data.data.moduleGetPrice / 100 : data.data.moduleGetPrice
+        this.activityPlanForm.imgUrl = data.data.imgUrl
+        this.activityPlanForm.imgUrlSquare = data.data.imgUrlSquare
+        this.activityPlanForm.name = data.data.name
+        this.activityPlanForm.showToC = data.data.showToC
+        this.activityPlanForm.phoneNum = data.data.phoneNum
+        this.activityPlanForm.address = data.data.address
+        this.activityPlanForm.poster = data.data.poster ? data.data.poster : ''
+        // 电话号码处理
+        if (data.data.phoneNum) {
+          if (data.data.phoneNum.indexOf('-') === -1 || data.data.phoneNum === '') {
+            this.phoneType = '1'
+          } else if (data.data.phoneNum.indexOf('-') === 3) {
+            this.phoneType = '3'
+            this.enterPhoneNum = data.data.phoneNum.split('-')[0]
+            this.enterPhoneNum_ = data.data.phoneNum.split('-')[1]
+            this.enterPhoneNum_2 = data.data.phoneNum.split('-')[2]
+          } else if (data.data.phoneNum.indexOf('-') === 4) {
+            this.phoneType = '2'
+            this.enterPhoneNum = data.data.phoneNum.split('-')[0]
+            this.enterPhoneNum_ = data.data.phoneNum.split('-')[1]
+          }
+        }
+        // this.activityPlanForm.showPrice = data.data.showPrice / 100
+        this.activityPlanForm.price = data.data.price / 100
+        this.activityPlanForm.totalNum = data.data.totalNum
+        this.activityPlanForm.time = []
+        this.activityPlanForm.time[0] = data.data.startTime
+        this.activityPlanForm.time[1] = data.data.endTime
+        this.activityPlanForm.useTime = []
+        this.activityPlanForm.useTime[0] = data.data.startUseTime
+        this.activityPlanForm.useTime[1] = data.data.endUseTime
+        this.activityPlanForm.lng = data.data.lng
+        this.activityPlanForm.lat = data.data.lat
+        this.activityPlanForm.point = data.data.lat + ',' + data.data.lng
+        this.activityPlanForm.doorAdd = data.data.doorAdd
+        this.groups = getGroup(data.data.groupIds, 2)
+        this.groupsThird = getGroupChild(this.groups[0].id)
+        if (data.data.activityGroupIds) {
+          let arr = data.data.activityGroupIds.split(',')
+          arr = arr.filter(item => item !== '')
+          console.log(arr)
+          arr.forEach(item => {
+            this.groupsThird.findIndex(v => v.id === Number(item)) !== -1 ? this.checkGroupId = Number(item) : ''
+          })
+          console.log(this.groupsThird)
+          console.log(this.checkGroupId)
+        }
+        this.activityPlanForm.photos = data.data.photos
+         const attentionArr = []
+        // 将注意事项转换成对应的值
+        const attention = data.data.attention && data.data.attention.length > 0 ? data.data.attention : []
+        attention.forEach( element => {
+          attentionArr.push({
+            id: element.id,
+            noteKey: element.noteKey,
+            noteValue: element.noteValue
+          })
+        })
+        this.activityPlanForm.attention = JSON.stringify(attentionArr)
+        this.activityPlanForm.fullText = data.data.fullText
+        this.activityPlanForm.prizeFullText = data.data.prizeFullText
+      })
+    },
+    setData(data) {
+      this.isNew = false
+      this.activityPlanForm.address = data.address
+      this.activityPlanForm.doorAdd = data.doorAdd
+      this.activityPlanForm.moduleGetPrice = data.moduleGetPrice > 0 ? data.moduleGetPrice / 100 : data.moduleGetPrice
+      this.activityPlanForm.lng = data.lng
+      this.activityPlanForm.lat = data.lat
+      this.activityPlanForm.poster = data.poster ? data.poster : ''
+      this.activityPlanForm.point = data.lat + ',' + data.lng
+      // 根据电话号码判断格式
+      this.activityPlanForm.phoneNum = data.phoneNum ? data.phoneNum : ''
+      if (data.phoneNum) {
+        if (data.phoneNum.indexOf('-') === -1 || data.phoneNum === '') {
+          this.phoneType = '1'
+        } else if (data.phoneNum.indexOf('-') === 3) {
+          this.phoneType = '3'
+          this.enterPhoneNum = data.phoneNum.split('-')[0]
+          this.enterPhoneNum_ = data.phoneNum.split('-')[1]
+          this.enterPhoneNum_2 = data.phoneNum.split('-')[2]
+        } else if (data.phoneNum.indexOf('-') === 4) {
+          this.phoneType = '2'
+          this.enterPhoneNum = data.phoneNum.split('-')[0]
+          this.enterPhoneNum_ = data.phoneNum.split('-')[1]
+        }
+      }
+      console.log(data.phoneNum)
+      this.activityPlanForm.name = data.name
+      this.activityPlanForm.price = data.price / 100
+      this.activityPlanForm.totalNum = data.totalNum
+      this.activityPlanForm.imgUrl = data.mainImgUrl
+      this.activityPlanForm.imgUrlSquare = data.imgUrlSquare
+      this.activityPlanForm.showToC = data.showToC
+      this.activityPlanForm.fullText = data.fullText ? data.fullText : ''
+      this.activityPlanForm.time = []
+      this.activityPlanForm.time[0] = data.startTime
+      this.activityPlanForm.time[1] = data.endTime
+      this.activityPlanForm.useTime = []
+      this.activityPlanForm.useTime[0] = data.startUseTime
+      this.activityPlanForm.useTime[1] = data.endUseTime
+      this.activityPlanForm.attention = data.attention
+      this.activityPlanForm.photoShow = data.photoShow
+      if (data.activityGroupIds) {
+        let arr = data.activityGroupIds.split(',')
+        arr = arr.filter(item => item !== '')
+        this.groups = getGroup(data.activityGroupIds, 2)
+        this.groupsThird = getGroupChild(this.groups[0].id)
+        arr.forEach(item => {
+          this.groupsThird.findIndex(v => v.id === Number(item)) !== -1 ? this.checkGroupId = Number(item) : ''
+        })
+      } else {
+        this.getGroup()
+      }
+      this.activityPlanForm.photos = data.photos
+      this.activityPlanForm.attention = data.attention
+      this.activityPlanForm.fullText = data.fullText
+      this.activityPlanForm.prizeFullText = data.prizeFullText
+    },
+    getPhotoShowData(data) {
+      const arr = JSON.parse(data)
+      const arrPro = []
+      arr.forEach(item => {
+        arrPro.push(item.url)
+      })
+      this.activityPlanForm.photos = JSON.stringify(arrPro)
+    },
+    getKvData(data) {
+      this.activityPlanForm.attention = data
+    },
+    fullText_contentChange(data) {
+      this.activityPlanForm.fullText = data
+    },
+    prizeFullText_contentChange(data) {
+      this.activityPlanForm.prizeFullText = data
+    },
+    // 获得分组
+    getGroup() {
+      if (this.$cookie.get('moduleType') === '301') {
+        this.isMarket = true
+        return
+      }
+      const url = this.apiList.module.moduleShop.getDetail
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData('', url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.groups = getGroup(data.data.groupIds, 2)
+          this.groupsThird = getGroup(data.data.groupIds, 3)
+        }
+      })
+    },
+    // 动态获得地址
+    remoteMethod(data) {
+      this.$refs.myMap.getAddList(data)
+    },
+
+    chooseAddressPoint(point) {
+      this.activityPlanForm.point = point.lat + ',' + point.lng
+      this.activityPlanForm.address = point.address
+    },
+    chooseAddress(data){
+      const _idx = this.options.findIndex(item => item.title === data)
+      console.log(this.options[_idx])
+      this.activityPlanForm.lat = this.options[_idx].lat
+      this.activityPlanForm.lng = this.options[_idx].lng
+    },
+    getAddList(val) {
+      this.options = []
+      const data = val.map((v, i, a) => {
+        let arr = v.split(',')
+        const obj = {
+          title: '',
+          address: '',
+          lat: '',
+          lng: ''
+        }
+        obj.id = i
+        obj.title = arr[0]
+        obj.address = arr[1] ? arr[1] : ''
+        obj.lat = arr[2] ? arr[2] : ''
+        obj.lng = arr[3] ? arr[3] : ''
+        this.options.push(obj)
+      })
+      this.$nextTick(() => {
+        this.$refs.addSelect.focus()
+      })
+    },
+    // 提交表单
+    submitForm() {
+      this.$refs['activityPlanForm'].validate((valid) => {
+        let url = this.apiList.shop.activityPlan.add
+        if (this.form_type === 'edit') {
+          url = this.apiList.shop.activityPlan.edit
+        }
+        if (this.activityPlanForm.phoneNum === '' && this.enterPhoneNum === '' && this.enterPhoneNum_ === '' && this.enterPhoneNum_2 === '') {
+          return this.$message.error('联系电话不能为空，请确认您填写的联系电话')
+        } else {
+          switch (this.phoneType) {
+            case '1':
+              if (!/^1(3|4|7|5|8|9|6)([0-9]{9})/.test(this.activityPlanForm.phoneNum)) {
+                return this.$message.error('您填写的手机号码格式有误，请确认您填写的联系电话')
+              }
+              break
+            case '2':
+              this.activityPlanForm.phoneNum = this.enterPhoneNum + '-' + this.enterPhoneNum_
+              if (!/^0[0-9]{2,3}-[0-9]{8}/.test(this.activityPlanForm.phoneNum)) {
+                return this.$message.error('您填写的固定电话格式有误，请确认您填写的联系电话')
+              }
+              break
+            case '3':
+              this.activityPlanForm.phoneNum = this.enterPhoneNum + '-' + this.enterPhoneNum_ + '-' + this.enterPhoneNum_2
+              if (!/^400-[0-9]{3}-[0-9]{4}/.test(this.activityPlanForm.phoneNum)) {
+                return this.$message.error('您填写的400号码格式有误，请确认您填写的联系电话')
+              }
+              break
+          }
+        }
+        if (valid) {
+          const submitData = JSON.parse(JSON.stringify(this.activityPlanForm))
+          submitData.startTime = typeof(this.activityPlanForm.time[0]) === 'number' ? this.activityPlanForm.time[0] : timestamp(this.activityPlanForm.time[0])
+          submitData.endTime = typeof(this.activityPlanForm.time[1]) === 'number' ? this.activityPlanForm.time[1] : timestamp(this.activityPlanForm.time[1])
+          submitData.startUseTime = typeof(this.activityPlanForm.useTime[0]) === 'number' ? this.activityPlanForm.useTime[0] : timestamp(this.activityPlanForm.useTime[0])
+          submitData.endUseTime = typeof(this.activityPlanForm.useTime[1]) === 'number' ? this.activityPlanForm.useTime[1] : timestamp(this.activityPlanForm.useTime[1])
+          submitData.price =  Math.round(submitData.price * 100)
+          submitData.activityGroupIds = []
+          this.groups.forEach((v, i ,a) => {
+            submitData.activityGroupIds.push(v.id)
+          })
+          submitData.moduleGetPrice = submitData.moduleGetPrice >= 0 ? submitData.moduleGetPrice * 100 : -1
+          submitData.activityGroupIds.push(this.checkGroupId)
+          submitData.activityGroupIds = submitData.activityGroupIds.join(',')
+          submitData.lat = submitData.point ? submitData.point.split(',')[0] : ''
+          submitData.lng = submitData.point ? submitData.point.split(',')[1] : ''
+          if (this.$cookie.get('moduleType') === '301') {
+            submitData.activityGroupIds = "8"
+          }
+          this.$http({
+            url: this.$http.adornUrl(url),
+            method: 'post',
+            data: this.$http.adornData(submitData, url, true)
+          }).then(({ data }) => {
+            if (data.result) {
+              if (this.saveData) {
+                const url = this.apiList.shop.template.add
+                const formData = submitData
+                formData.type = 501
+                formData.mainImgUrl = formData.imgUrl
+                this.$http({
+                  url: this.$http.adornUrl(url),
+                  method: 'post',
+                  data: this.$http.adornData(formData, url, true)
+                }).then(({ data }) => {
+                  if (data.result) {
+                    this.$message({ type: 'success', message: '提交成功' })
+                    this.$emit('success')
+                  }
+                })
+              } else {
+                this.$message({ type: 'success', message: '提交成功' })
+                this.$emit('success')
+              }
+            } else {
+              // this.$message({ message: data.msg, type: 'warning' })
+              this.$emit('close')
+            }
+          })
+        }
+      })
+    },
+    // 选择图片
+    chooseImg(data) {
+      this.activityPlanForm.imgUrl = data
+    },
+    chooseImg_imgUrlSquare(data) {
+      this.activityPlanForm.imgUrlSquare = data
+    },
+    close() {
+      this.$emit('close')
+    }
+  },
+  mounted() {
+  }
+}
+</script>
+<style lang="scss">
+.activityPlanFrom{
+  .inline{
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+    text-align: center;
+    line-height: 48px;
+  }
+  .update {
+    width: 222px;
+    height: 136px;
+    line-height: 136px;
+    overflow: hidden;
+  }
+  .avatar-uploader .el-upload {
+    border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar-uploader .el-upload:hover {
+    border-color: #409EFF;
+  }
+  .avatar-uploader-icon {
+    font-size: 28px;
+    color: #8c939d;
+    width: 178px;
+    height: 178px;
+    line-height: 178px;
+    text-align: center;
+  }
+  .avatar {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+}
+</style>

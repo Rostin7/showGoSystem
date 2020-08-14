@@ -1,0 +1,38 @@
+<template>
+  <div class="backCity">
+    <svg-icon class-name="search-icon" icon-class="return" @click="returnCity" />
+  </div>
+</template>
+<script>
+export default {
+  props: {
+    url: {}
+  },
+  data() {
+    return{
+      toUrl: ''
+    }
+  },
+  methods: {
+    returnCity() {
+      this.$cookie.set('moduleId', this.$cookie.get('chooseCityId'))
+      this.$emit('returnCity')
+      this.$store.dispatch('user/getInfo').then((data) => {
+        console.log(data)
+        this.$store.dispatch('permission/generateRoutes', data).then((accessRoutes) => {
+          this.$router.addRoutes(accessRoutes)
+          this.$router.push({ path: '/' + this.toUrl })
+        })
+      })
+    }
+  },
+  watch: {
+    url: function() {
+      this.toUrl = this.url
+    }
+  },
+  created() {
+    // 判断是否刷新页面导致的返回消失
+  }
+}
+</script>

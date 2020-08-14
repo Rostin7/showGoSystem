@@ -1,0 +1,21 @@
+<template>
+  <div>
+    
+  </div>
+</template>
+<script>
+import pmSale from '../../preview/pmSale'  // 促销和商品的预览
+import enterName from '../../preview/enterName' // 报名和活动的预览
+ // 抽奖的预览
+export default {
+  data() {
+    return{
+
+    }
+  },
+  methods: {},
+  components: {
+
+  }
+}
+</script>

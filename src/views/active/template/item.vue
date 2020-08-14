@@ -1,0 +1,210 @@
+<template>
+  <div class="pmSale">
+    <el-row :gutter="15">
+      <el-col :span="24">
+        <el-card shadow="never">
+          <el-form @submit.native.prevent :inline="true" class="demo-form-inline">
+            <el-form-item style="margin-bottom: 0"><p class="main_header">模板管理</p></el-form-item>
+            <el-form-item>
+              <el-button @click.native="addModel" v-if="isAuth('/activityTemplate/add')"><i class="el-icon-plus"></i></el-button>
+            </el-form-item>
+          </el-form>
+          <el-table :data="tableList" v-loading="listLoading" element-loading-text="拼命加载中">
+            <el-table-column prop="id" label="Id" width="60" align="center" header-align="center" />
+            <el-table-column prop="name" label="名称" align="center" header-align="center"/>
+            <el-table-column prop="showToC" label="状态" align="center" header-align="center">
+              <template slot-scope="scope">
+                <el-tag v-if="scope.row.showToC" type="success" @click.stop="changeState(scope.$index, scope.row)">已上架</el-tag>
+                <el-tag v-else type="info" @click.stop="changeState(scope.$index, scope.row)">未上架</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="beginTime" label="活动时间" align="center" header-align="center" width="300">
+              <template slot-scope="scope">
+                  <p style="margin: 0">活动开始时间：{{ timeChange('Y-m-d H:i:s', scope.row.startTime) }}</p>
+                  <p style="margin: 0">活动结束时间：{{ timeChange('Y-m-d H:i:s', scope.row.endTime) }}</p>
+                  <p style="margin: 0">凭证使用开始时间：{{ timeChange('Y-m-d H:i:s', scope.row.startUseTime) }}</p>
+                  <p style="margin: 0">凭证使用结束时间：{{ timeChange('Y-m-d H:i:s', scope.row.endUseTime) }}</p>
+              </template>
+            </el-table-column>
+            <el-table-column prop="imgUrl" v-if="type == 701" label="奖品" align="center" header-align="center" width="200">
+              <template slot-scope="scope">
+                <p style="margin: 0" v-for="(item, index) in JSON.parse(scope.row.prizeJson)" :key="index">{{ `${item.prizeName}*${item.prizeNum}件` }}</p>
+              </template>
+            </el-table-column>
+            <el-table-column prop="mainImgUrl" v-if="type !== 701"  label="主图" align="center" header-align="center" width="200">
+              <template slot-scope="scope">
+                <img :src="scope.row.mainImgUrl" alt="" style="max-width: 100%;">
+              </template>
+            </el-table-column>
+            <el-table-column prop="price" label="出售信息" v-if="type !== 701" align="center" header-align="center" width="200">
+              <template slot-scope="scope">
+                <!-- {{timeChange('Y-m-d', scope.row.beginTime)}} -->
+                <!-- <el-popover trigger="hover" placement="top"> -->
+                  <p style="margin: 0">促销价格： ￥{{scope.row.price/100}}</p>
+                  <p style="margin: 0">原始价格： ￥{{scope.row.showPrice/100}}</p>
+                  <p style="margin: 0">促销数量： {{scope.row.totalNum}}</p>
+                  <p style="margin: 0" v-if="scope.row.totalCanBuy">最大购买数量： {{scope.row.totalCanBuy}}</p>
+                  <p v-if="scope.row.resellPrice" style="margin: 0">分销价格：￥{{scope.row.resellPrice / 100}}</p>
+                  <!-- <div slot="reference" class="name-wrapper">
+                    <el-tag size="medium">售价：￥{{scope.row.price/100}}</el-tag>
+                  </div> -->
+                <!-- </el-popover> -->
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" align="center" header-align="center">
+              <template slot-scope="scope">
+                <el-button
+                  size="mini"
+                  type="text"
+                  v-if="isAuth('/activityTemplate/update')"
+                  @click="submitEdit(scope.$index, scope.row)">修改</el-button>
+                <el-button
+                  v-if="isAuth('/activityTemplate/delete')"
+                  size="mini"
+                  type="text"
+                  class="danger"
+                  @click="submitDelete(scope.$index, scope.row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+          <!--工具条-->
+          <el-pagination
+            layout="total, prev, pager, next"
+            background
+            :page-size="pageSize"
+            :total="total"
+            style="text-align:center;"
+            @current-change="handleCurrentChange"
+          />
+        </el-card>
+      </el-col>
+    </el-row>
+    <el-dialog :title="dialogTitle" :visible.sync="dialogFormVisible" :close-on-click-modal="false" :modal="true"  width="900px">
+      <template-form ref="templateForm" v-if="dialogFormVisible&&(type === 301|type ===  601)" :activeType="type" :formType="formType" @success="success" @close="dialogFormVisible = !dialogFormVisible"/>
+      <template-entername ref="templateForm" v-if="dialogFormVisible&&type === 101" :activeType="type" :formType="formType" @success="success" @close="dialogFormVisible = !dialogFormVisible"/>
+      <template-activityplan ref="templateForm" v-if="dialogFormVisible&&type === 501" :activeType="type" :formType="formType" @success="success" @close="dialogFormVisible = !dialogFormVisible"/>
+      <template-prizedraw ref="templateForm" v-if="dialogFormVisible&&type === 701" :activeType="type" :formType="formType" @success="success" @close="dialogFormVisible = !dialogFormVisible"/>
+    </el-dialog>
+  </div>
+</template>
+<script>
+import TemplateForm from './templateForm'
+import TemplateEntername from './templateFormEnterName'
+import TemplateActivityplan from './templateFormActivityPlan'
+import TemplatePrizedraw from './TemplatePrizedraw'
+export default {
+  props: {
+    type: {}
+  },
+  data() {
+    return{
+      chooseActivityId: 0,
+      tableList: [],
+      listLoading: true,
+      total: 0,
+      page: 1,
+      pageSize: 10,
+      dialogFormVisible: false,
+      dialogTitle: '添加新模板',
+      formType: 'add',
+    }
+  },
+  components: {
+    TemplateForm,
+    TemplateEntername,
+    TemplateActivityplan,
+    TemplatePrizedraw
+  },
+  methods: {
+    getDataList() {
+      this.listLoading = true
+      const url = this.apiList.shop.template.list
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ page: this.page, size: this.pageSize, type: this.type }, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.tableList = data.data.records
+          this.total = data.data.total
+        } else {
+          // 请求失败
+          // this.$message.error(data.msg)
+        }
+        this.listLoading = false
+      }).catch(() => {
+        // this.$message.error('未知错误')
+        this.listLoading = false
+      })
+    },
+    // 点击删除
+    submitDelete(index, data) {
+      // 点击确认删除
+      this.$confirm('此操作将永久删除该数据, 是否继续?', '提示', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'danger' }
+      ).then(() => {
+        const url = this.apiList.shop.template.del
+        this.$http({
+          url: this.$http.adornUrl(url),
+          method: 'post',
+          data: this.$http.adornData({ id: data.id }, url, true)
+        }).then(({ data }) => {
+          if (data.result) {
+            // 删除成功
+            this.$message({ type: 'success', message: '删除成功' })
+            // 删除当前列表
+            this.tableList.splice(index, 1)
+            this.total --
+          }
+        })
+      }).catch(() => {
+        // this.$message.error('未知错误')
+      })
+    },
+    // 点击切换上下架状态
+    // 切换上下架
+    changeState(index, data) {
+      const state = !data.showToC
+      const url = this.apiList.shop.template.edit
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: 'post',
+        data: this.$http.adornData({ showToC: state, id: data.id, type: this.type }, url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.tableList[index].showToC = state
+        }
+      })
+    },
+    // 点击添加
+    addModel(index, data) {
+      this.formType = 'add'
+      this.dialogTitle = '添加新模板'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs.templateForm.getGroup()
+      })
+    },
+    // 点击修改
+    submitEdit(index, data) {
+      this.formType = 'edit'
+      this.dialogTitle = '修改模板'
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs.templateForm.init({ data })
+      })
+    },
+    success() {
+      this.dialogFormVisible = false
+      this.getDataList()
+    },
+    // 分页组件切换
+    handleCurrentChange(value) {
+      this.page = value
+      this.getDataList()
+    },
+  },
+  created() {
+    this.getDataList()
+  }
+}
+</script>

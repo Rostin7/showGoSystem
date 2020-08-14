@@ -1,0 +1,49 @@
+<template>
+  <div class="template">
+    <el-tabs type="border-card">
+      <el-tab-pane v-for="item in dataList" :key="item.type" :label="item.name">
+        <item :type="item.type" />
+      </el-tab-pane>
+    </el-tabs>
+  </div>
+</template>
+<script>
+import item from './item'
+export default {
+  data() {
+    return{
+      dataList: [
+        {
+          type: 301,
+          name: '促销模板'
+        }
+        ,
+        {
+          type: 101,
+          name: '报名模板'
+        },
+        {
+          type: 501,
+          name: '活动模板'
+        },
+        {
+          type: 601,
+          name: '商品模板'
+        },
+        {
+          type: 701,
+          name: '抽奖模板'
+        },
+      ]
+    }
+  },
+  components: {
+    item
+  }
+}
+</script>
+<style lang="scss">
+  .template{
+
+  }
+</style>

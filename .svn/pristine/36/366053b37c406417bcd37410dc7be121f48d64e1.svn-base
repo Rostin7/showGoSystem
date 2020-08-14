@@ -1,0 +1,1573 @@
+<template>
+  <div class="detail_sign">
+    <div class="header_fixed1">
+      <div
+        class="header"
+        :class="{
+        'headerDefault':!this.defaultTheme,
+        'headerPet':this.defaultTheme === 19,
+        'headerBeauty':this.defaultTheme === 13 ,
+        'headerChild':this.defaultTheme === 5,
+        'headerMarket':this.defaultTheme === 8,
+        'headerOther':this.defaultTheme === 25 || this.defaultTheme > 46,
+        'headerFoods':this.defaultTheme === 31,
+        'headerTravel':this.defaultTheme === 37,
+        'headerFun':this.defaultTheme === 41,}"
+      >
+        <span>
+          <img src="../../assets/preview/back.png" alt />
+        </span>
+
+        <span
+          style="line-height: 35px;color: #fff; font-size: 16px"
+          v-if="!this.defaultTheme"
+        >活动报名</span>
+        <span style="line-height: 35px" v-if="this.defaultTheme === 19">
+          <img
+            style="width: 72px; height: 16.5px"
+            src="../../assets/preview/signUp/petsTitle.png"
+            alt
+          />
+        </span>
+        <span v-if="this.defaultTheme === 13">
+          <img
+            style="width: 82.5px; height: 19px;"
+            src="../../assets/preview/signUp/beautyTitle.png"
+            alt
+          />
+        </span>
+        <span v-if="this.defaultTheme === 5" style="line-height: 40px">
+          <img
+            style="width: 76px; height: 17px;"
+            src="../../assets/preview/signUp/childTitle.png"
+            alt
+          />
+        </span>
+        <span v-if="this.defaultTheme === 8" style="line-height: 40px">
+          <img
+            style="width: 83.5px; height:18px;"
+            src="../../assets/preview/signUp/marketTitle.png"
+            alt
+          />
+        </span>
+        <span
+          style="line-height: 35px"
+          v-if="this.defaultTheme === 25  || this.defaultTheme > 46"
+        >
+          <img
+            style="width: 70.5px; height: 21px;"
+            src="../../assets/preview/signUp/title.png"
+            alt
+          />
+        </span>
+        <span v-if="this.defaultTheme === 31 " style="line-height: 40px">
+          <img
+            style="width: 90px; height: 18px;"
+            src="../../assets/preview/signUp/foodsTitle.png"
+            alt
+          />
+        </span>
+        <span v-if="this.defaultTheme === 37 " style="line-height: 40px">
+          <img
+            style="width: 100px; height: 20px;"
+            src="../../assets/preview/signUp/travelTitle.png"
+            alt
+          />
+        </span>
+        <span v-if="this.defaultTheme === 41 " style="line-height: 40px">
+          <img
+            style="width: 91px; height: 18px;"
+            src="../../assets/preview/signUp/funTitle.png"
+            alt
+          />
+        </span>
+        <span>
+          <div class="buttonShare">
+            <img src="../../assets/preview/shareNew.png" class="img"><span class="spanShare">分享</span>
+          </div>
+        </span>
+      </div>
+    </div>
+    <div v-show="!nothing">
+      <div class="detail_header">
+         <img
+          v-if="!this.defaultTheme"
+          class="detail_header_bg"
+          src="../../assets/preview/defaultBg.png"
+          :onerror="defaultImg"
+        />
+        <img
+          v-if="this.defaultTheme === 19"
+          class="detail_header_petsBg"
+          src="../../assets/preview/petsBg.png"
+        />
+        <img
+          v-if="this.defaultTheme === 13"
+          class="detail_header_beautyBg"
+          src="../../assets/preview/beautyBg.png"
+        />
+        <img
+          v-if="this.defaultTheme === 5"
+          class="detail_header_childBg"
+          src="../../assets/preview/childBg.png"
+        />
+        <img
+          v-if="this.defaultTheme === 8"
+          class="detail_header_beautyBg"
+          src="../../assets/preview/marketBg.png"
+        />
+        <img
+          v-if="this.defaultTheme === 25 || this.defaultTheme > 46"
+          class="detail_header_otherBg"
+          src="../../assets/preview/detaillPromotion.png"
+        />
+        <img
+          v-if="this.defaultTheme === 31"
+          class="detail_header_foodsBg"
+          src="../../assets/preview/foodsDetail.png"
+        />
+        <img
+          v-if="this.defaultTheme === 37"
+          class="detail_header_travelBg"
+          src="../../assets/preview/travelDetail.png"
+        />
+        <img
+          v-if="this.defaultTheme === 41"
+          class="detail_header_funBg"
+          src="../../assets/preview/recreationDetail.png"
+        />
+
+        <!--      <img :src="img_url_bg" class="detail_header_bg">-->
+        <!--      <img class="imgUrl_bg" src="../../assets/preview/home/bag1.png" >-->
+        <div class="mainHeader">
+          <img :src="imgUrlSignUp+'!660w'" class="imgUrlSignUp" :onerror="defaultImgBg" />
+        </div>
+      </div>
+      <div class="detail_title">{{name}}</div>
+      <div class="detail_num">
+        <p>
+          <span>浏览 {{viewCount}}次</span>
+          收藏 {{collectCount}}次
+        </p>
+        <!--      <span class="detail_span" v-show="Math.min.apply(null, childItem) === Math.max.apply(null, childItem)"><i>￥</i>{{Math.min.apply(null, childItem)}}</span>-->
+        <!--      <span class="detail_span" v-show="Math.min.apply(null, childItem) != Math.max.apply(null, childItem)"><i>￥</i>{{Math.min.apply(null, childItem)}}-{{Math.max.apply(null, childItem)}}</span>-->
+
+        <!--      <span class="detail_span"><i>￥</i>{{ price }}</span>-->
+        <!--      <span class="detail_span" v-else><i>￥</i>{{ min_money }}-{{ max_money }}</span>-->
+        <span class="detail_span" v-if="min_money === max_money">
+          <i>￥</i>
+          {{min_money}}
+        </span>
+        <span class="detail_span" v-else>
+          <i>￥</i>
+          {{ min_money }}-{{ max_money }}
+        </span>
+      </div>
+      <div class="detail_bg_line">
+        <i></i>
+      </div>
+      <div class="detail_info">
+        <div class="detail_info_time">
+          <i class="detail_info_time_icon"></i>
+          <span
+            class="detail_info_title"
+            v-if="childTimeItem != ''"
+          >{{timeChange('Y年m月d日（周w）H:i',minTime)}}</span>
+          <span class="detail_info_title" v-else></span>
+          <div class="detail_info_line"></div>
+          <span class="detail_info_remind" >提醒</span>
+        </div>
+        <!-- <div class="detail_info_time">
+           <i class="detail_info_time_icon icon2"></i><span class="detail_info_title" style="margin-right:80px ">3-5岁组</span> <div class="detail_info_line" style="margin-right:40px "></div>
+        </div>-->
+        <div class="detail_info_time">
+          <i class="detail_info_time_icon icon3"></i>
+          <span class="detail_info_title">{{address}}{{doorAdd ? doorAdd : ''}}</span>
+          <div class="detail_info_line margin3"></div>
+          <span class="detail_info_remind icon5" ></span>
+        </div>
+        <div class="detail_info_time">
+          <i class="detail_info_time_icon icon4"></i>
+          <span class="detail_info_title">{{phoneNum}}</span>
+          <div class="detail_info_line"></div>
+          <span class="detail_info_remind icon6" ></span>
+        </div>
+
+        <div class="mainBody_header">
+          <ul class="itemContain">
+            <li class="listItem">
+              <img
+                style="border-radius: 0;width: 24px; height: 27px;"
+                src="../../assets/preview/dianpufengcai.png"
+              />
+            </li>
+            <li class="listItem" style="width: 1.5px;">
+              <span class="right_border"></span>
+            </li>
+            <ul class="itemContainPre">
+              <li class="listItem" v-for="(item,index) in photos" :key="index">
+                <img
+                  :src="item  + '!50w'"
+                  :large="item  + '!660w'"
+                  :onerror="defaultImg"
+                  preview="1"
+                  preview-text="风采展示"
+                />
+              </li>
+            </ul>
+          </ul>
+        </div>
+        <!-- 分销商分销页面 -->
+        <share-item
+          :type="2"
+          :description="name"
+          :targetType="3012"
+          :targetId="Number(activity_id)"
+          :share_logo="imgUrlSquare+ '!440w'"
+          :dataAll="dataAll"
+          v-if="isDistributor==='true' && resellPrice > 0"
+        ></share-item>
+
+        <div class="detail_container">
+          <div class="mainBody_nav">
+            <ul class="itemContain" v-if="!this.defaultTheme">
+              <li
+                v-for="(item, index) in navItem"
+                :key="item"
+                :class="{'achieve': nowIndex === index, 'listItem': true}"
+                @click="tabClick(index)"
+              >{{item}}</li>
+              <!--            <cube-scroll-nav-bar :current="nowIndex" :labels="navItem"  />-->
+            </ul>
+            <ul
+              class="itemContain"
+              v-if="this.defaultTheme === 19 || this.defaultTheme === 31 || this.defaultTheme === 37 || this.defaultTheme === 41"
+            >
+              <li
+                v-for="(item, index) in navItem"
+                :key="item"
+                :class="{'achieve1': nowIndex === index, 'listItem': true}"
+                @click="tabClick(index)"
+              >{{item}}</li>
+              <!--            <cube-scroll-nav-bar :current="nowIndex" :labels="navItem"  />-->
+            </ul>
+            <ul class="itemContain" v-if="this.defaultTheme === 13">
+              <li
+                v-for="(item, index) in navItem"
+                :key="item"
+                :class="{'achieve2': nowIndex === index, 'listItem': true}"
+                @click="tabClick(index)"
+              >{{item}}</li>
+              <!--            <cube-scroll-nav-bar :current="nowIndex" :labels="navItem"  />-->
+            </ul>
+            <ul class="itemContain" v-if="this.defaultTheme === 5">
+              <li
+                v-for="(item, index) in navItem"
+                :key="item"
+                :class="{'achieve3': nowIndex === index, 'listItem': true}"
+                @click="tabClick(index)"
+              >{{item}}</li>
+              <!--            <cube-scroll-nav-bar :current="nowIndex" :labels="navItem"  />-->
+            </ul>
+            <ul class="itemContain" v-if="this.defaultTheme === 8">
+              <li
+                v-for="(item, index) in navItem"
+                :key="item"
+                :class="{'achieve': nowIndex === index, 'listItem': true}"
+                @click="tabClick(index)"
+              >{{item}}</li>
+              <!--            <cube-scroll-nav-bar :current="nowIndex" :labels="navItem"  />-->
+            </ul>
+            <ul class="itemContain" v-if="this.defaultTheme === 25">
+              <li
+                v-for="(item, index) in navItem"
+                :key="item"
+                :class="{'achieve': nowIndex === index, 'listItem': true}"
+                @click="tabClick(index)"
+              >{{item}}</li>
+              <!--            <cube-scroll-nav-bar :current="nowIndex" :labels="navItem"  />-->
+            </ul>
+          </div>
+          <!-- 轮播组件 -->
+          <swiper :options="swiperOption" ref="mySwiper">
+            <swiper-slide>
+              <div class="mainBody_desc">
+                <div class="hideBg">
+                  <!--                <div class="fulltext_desc" :class="isHide0 ? 'summary' : 'full'" v-html="fullText" id="fullText0"></div>-->
+                  <!--                <div v-if="isHide0" class="showBtn">-->
+                  <!--                  <a href="#" @click.stop.prevent="onShow(0)">展开阅读全文&nbsp;-->
+                  <!--                    <span class="downArrow"></span>-->
+                  <!--                  </a>-->
+                  <!--                </div>-->
+
+                  <ul class="notice">
+                    <li v-for="item in noticeList" :key="item.id">
+                      <p>{{ item.noteKey }}</p>
+                      <pre>{{ item.noteValue }}</pre>
+                    </li>
+                    <li>
+                      <p>使用流程</p>
+                      <div class="useProcess">
+                        <div class="useProcessItem">
+                          <img src="../../assets/preview/process0.png" alt />
+                          <span>
+                            购买后查看
+                            <br />我的订单
+                          </span>
+                        </div>
+                        <div class="useProcessItem">
+                          <img src="../../assets/preview/process1.png" alt />
+                          <span>
+                            点击取货码
+                            <br />出示二维码
+                          </span>
+                        </div>
+                        <div class="useProcessItem">
+                          <img src="../../assets/preview/process2.png" alt />
+                          <span>
+                            给商铺扫码
+                            <br />确认取货
+                          </span>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </swiper-slide>
+            <swiper-slide>
+              <div class="mainBody_desc">
+                <div class="hideBg">
+                  <div
+                    class="fulltext_desc"
+                    :class="isHide1 ? 'summary' : 'full'"
+                    v-html="fullText"
+                    id="fullText1"
+                  ></div>
+                  <div v-if="isHide1" class="showBtn">
+                    <a href="#" @click.stop.prevent="onShow(1)">
+                      展开阅读全文&nbsp;
+                      <span class="downArrow"></span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </swiper-slide>
+            <swiper-slide>
+              <div class="mainBody_desc">
+                <div class="hideBg">
+                  <div
+                    class="fulltext_desc"
+                    :class="isHide2 ? 'summary' : 'full'"
+                    v-html="prizeFullText"
+                    id="fullText2"
+                  ></div>
+                  <div v-if="isHide2" class="showBtn">
+                    <a href="#" @click.stop.prevent="onShow(2)">
+                      展开阅读全文&nbsp;
+                      <span class="downArrow"></span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </swiper-slide>
+          </swiper>
+        </div>
+      </div>
+
+      <transition name="fade">
+        <div class="choose_remind_shadow" v-if="signUpRemind" @click="signUpRemind = false"></div>
+      </transition>
+      <transition name="slide">
+        <div
+          class="choose_remind"
+          v-show="signUpRemind"
+          style="-webkit-transition: all 0.2s ease-in; transition: all 0.2s ease-in;"
+        >
+          <div class="choose_pay_title">
+            <span>
+              <img src="../../assets/preview/close.png" alt @click="signUpRemind = false" />
+            </span>
+            <span>选择提醒活动</span>
+          </div>
+
+          <div
+            v-for="(item,index) in childData"
+            class="money_pay_choose"
+            :key="item.id"
+            :class="{'choose_border'
+          :signUpRemindType === index}"
+          >
+            <div class="c2">
+              <div class="content_left">
+                <p class="price" :class="{'no_choose':item.totalNum === 0}" v-if="item.price===0">免费</p>
+                <p
+                  class="price"
+                  :class="{'no_choose':item.totalNum === 0}"
+                  v-else
+                >{{item.price/100}}元</p>
+                <p class="item" :class="{'no_choose':item.totalNum === 0}">{{item.name}}</p>
+              </div>
+              <div class="content_right">
+                <span>
+                  <i>{{timeChange('Y年m月d日 H:i', item.beginTime)}}</i>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
+
+      <div class="sign_up">
+        <h2>
+          已报名
+          <span>
+            <i>{{alreadyNum}} / {{totalNum}}</i>
+          </span>
+        </h2>
+        <div class="sign_up_img">
+          <div class="sign_up_content" v-for="(item,index) in dataTop" :key="index">
+            <!-- <img src="../../assets/preview/icon.png" :src="item.userAvatar" :onerror="defaultImg"> -->
+            <img :src="item.userAvatar" :onerror="defaultImg" />
+            <p>{{item.userNickName ? item.userNickName:'众享乐用户'}}</p>
+          </div>
+        </div>
+        <div class="sign_up_no" v-if="dataTop.length === 0">
+          <img src="../../assets/preview/spell/signUp.png" />
+          <span>暂无报名~</span>
+        </div>
+      </div>
+    </div>
+    <div v-show="nothing" class="nothing">
+      <img src="../../assets/preview/not_shop.png" />
+      <p>该商品已过期，不存在</p>
+    </div>
+  </div>
+</template>
+<script>
+import "swiper/dist/css/swiper.min.css";
+import ShareItem from "./shareItem";
+export default {
+  name: "detailSignUp",
+  data() {
+    return {
+      value: 0,
+      isDistributor: "",
+      page: 1,
+      size: 30,
+      resellPrice: 0,
+      noComment: false,
+      isAll: true,
+      dataAll: [],
+      noticeList: [],
+      activity_id: 1,
+      mapSelect: false,
+      type: 101,
+      imgUrlSquare: "",
+      imgUrlSignUp: require("../../assets/preview/marketIndex_bg.png"),
+      img_url_bg: require("../../assets/preview/marketIndex_bg.png"),
+      price: "",
+      showPrice: "",
+      endTime: 0,
+      startTime: "",
+      name: "",
+      viewCount: 0,
+      collectCount: 0,
+      //attenFullText: '',
+      //photoFullText: '',
+      prizeFullText: "",
+      photos: "", // 风采展示
+      fullText: "",
+      address: "",
+      doorAdd: "",
+      lat: "",
+      lng: "",
+      phoneNum: "",
+      totalNum: "",
+      alreadyNum: "",
+      moduleId: 15,
+      collect: "",
+      userId: "",
+      gotIt: "",
+      content: "",
+      isHide0: "",
+      isHide1: "",
+      isHide2: "",
+      isHide3: "",
+      nowIndex: 0,
+      navItem: ["注意事项", "活动介绍", "活动奖品"],
+      childData: [],
+      childItem: [0],
+      childTimeItem: [],
+      dataTop: [],
+      signUpRemind: false,
+      signUpRemindType: 0,
+      defaultTheme: "",
+      swiperOption: {
+        notNextTick: false,
+        paginationClickable: true,
+        autoHeight: true,
+        observer: true,
+        observeParents: true,
+        loop: false,
+        //touchAngle : 15,
+        on: {
+          slideChange: () => {
+            this.nowIndex = this.$refs.mySwiper.swiper.realIndex;
+          }
+        }
+      },
+      defaultImgBg:
+        'this.src="' + require("../../assets/preview/detail_bg.png") + '"',
+      defaultImg:
+        'this.src="' + require("../../assets/preview/signUp/default.png") + '"',
+      nothing: false,
+      navColor: "",
+      isWeChat: false
+    };
+  },
+  computed: {
+    // 计算属性的 getter
+    min_money() {
+      // console.log(Math.min.apply(null, this.childItem))
+      if (this.childItem.length != 0) {
+        return Math.min.apply(null, this.childItem);
+      } else {
+        return null;
+      }
+    },
+    max_money() {
+      if (this.childItem.length != 0) {
+        return Math.max.apply(null, this.childItem);
+      } else {
+        return null;
+      }
+    },
+    minTime() {
+      if (this.childTimeItem.length != 0) {
+        return Math.min.apply(null, this.childTimeItem);
+      } else {
+        return null;
+      }
+    }
+  },
+  components: {
+    Comment,
+    ShareItem
+  },
+
+  methods: {
+    tabClick(index) {
+      this.$refs.mySwiper.swiper.slideTo(index, 300, true);
+    },
+    onShow(index) {
+      switch (index) {
+        case 0:
+          return (this.isHide0 = false);
+          break;
+        case 1:
+          return (this.isHide1 = false);
+          break;
+        case 2:
+          return (this.isHide2 = false);
+          break;
+        case 3:
+          return (this.isHide3 = false);
+          break;
+        default:
+          return;
+      }
+    },
+    getDataList() {
+      let url = this.apiList.shop.enterName.detail
+      this.$http({
+        url: this.$http.adornUrl(url),
+        method: "post",
+        data: this.$http.adornData({ id: this.activity_id },url, true)
+      }).then(({ data }) => {
+        if (data.result) {
+          this.imgUrlSignUp = data.data.imgUrl;
+          this.img_url_bg = data.data.imgUrl;
+          this.imgUrlSquare = data.data.imgUrlSquare;
+          this.price = data.data.price / 100;
+          this.showPrice = data.data.showPrice / 100;
+          this.endTime = data.data.endTime;
+          this.startTime = data.data.startTime;
+          this.address = data.data.address;
+          this.doorAdd = data.data.doorAdd;
+          this.name = data.data.name;
+          this.viewCount = data.data.viewCount;
+          this.collectCount = data.data.collectCount;
+          this.alreadyNum = data.data.alreadyNum;
+          this.totalNum = data.data.totalNum;
+          this.phoneNum = data.data.phoneNum;
+          this.moduleId = data.data.moduleId;
+          this.type = data.data.type;
+          this.collect = data.data.collect;
+          this.lng = data.data.lng;
+          this.lat = data.data.lat;
+          this.gotIt = data.data.gotIt;
+          this.dataAll = data.data
+          this.noticeList = data.data.attention
+          if (!this.defaultTheme) {
+            this.defaultTheme = data.data.defaultTheme;
+          }
+          if (!this.defaultTheme) {
+            this.navColor = "#00B0FF";
+          } else if (this.defaultTheme === 19) {
+            this.navColor = "#D2D1F6";
+          } else if (this.defaultTheme === 13) {
+            this.navColor = "#F091F5";
+          } else if (this.defaultTheme === 5) {
+            this.navColor = "#ECF2D8";
+          } else if (this.defaultTheme === 8) {
+            this.navColor = "#ECF4F7";
+          } else if (this.defaultTheme === 25 || this.defaultTheme > 46) {
+            this.navColor = "#ffffff";
+          } else if (this.defaultTheme === 31) {
+            this.navColor = "#D9E8D2";
+          } else if (this.defaultTheme === 37) {
+            this.navColor = "#33CEFE";
+          } else if (this.defaultTheme === 41) {
+            this.navColor = "#8043EE";
+          }
+          this.photos = data.data.photos ? JSON.parse(data.data.photos) : []
+          this.prizeFullText = data.data.prizeFullText
+            ? Base64.decode(data.data.prizeFullText)
+            : "";
+          this.fullText = data.data.fullText
+            ? Base64.decode(data.data.fullText)
+            : ""
+          this.$nextTick(() => {
+            let h2 = document.querySelector("#fullText1").offsetHeight;
+            let h3 = document.querySelector("#fullText2").offsetHeight;
+            if (h2 >= 280) {
+              this.isHide1 = true;
+            } else {
+              this.isHide1 = false;
+            }
+            if (h3 >= 280) {
+              this.isHide2 = true;
+            } else {
+              this.isHide2 = false;
+            }
+          });
+        } else if (data.msg === "不存在") {
+          this.nothing = true;
+        }
+      })
+    }
+  
+  },
+  created() {
+    this.defaultTheme = 19
+  }
+};
+</script>
+<style lang="scss">
+.detail_sign {
+  background-color: #eaeaea;
+  bottom: auto;
+  position: relative;
+  width: 375px;
+  margin: auto;
+  ul{
+    margin: 0;
+    padding: 0;
+  }
+  .itemContainPre{
+    overflow: hidden!important;
+  }
+  .fulltext_desc{
+    img{
+      max-width: 100%;
+      //height:auto !important;
+    }
+    p{
+    //   font-size: 12px;
+      min-height: 17.5px;
+    //   line-height: 20px;
+    }
+    // div{
+    //   font-size: 12px;
+    //   // line-height: 1.7rem;
+    // }
+    strong{
+      font-weight: bold;
+      word-wrap: break-word;
+      word-break: normal;
+    }
+    video{
+      max-width: 100%;
+      border: solid 1px #ccc;
+    }
+  }
+  .buttonShare{
+    width:50px;
+    height:20px;
+    background:rgba(255,255,255,1);
+    border-radius:10px;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 7px;
+    box-shadow: 0 0 2px 0 #999999;
+    .img{
+      width: 12px;
+      height: 12px;
+    }
+    .spanShare{
+      font-weight: bold;
+      font-size: 11px;
+      color: #333333;
+    }
+  }
+  li{
+    list-style: none;
+  }
+  .header_fixed1 {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0rem;
+    top: env(safe-area-inset-top);
+    z-index: 15;
+    width: 100%;
+    height: 44px;
+    .header{
+      span:nth-child(1){
+        img{
+          padding-right: 20px;
+        }
+      }
+      span:nth-child(3){
+        .util_share{
+          padding-left: 18px;
+        }
+      }
+    }
+  }
+  p{
+    margin: 0;
+  }
+  i{
+    font-style: normal;
+  }
+  // 使用流程
+  .useProcess{
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    .useProcessItem{
+      display: inline-block;
+      img{
+        width: 20px;
+        height: 20px;
+        vertical-align: middle;
+      }
+      span{
+        display: inline-block;
+        width: 62px;
+        font-size: 11px;
+        line-height: 15px;
+        color: #666;
+        vertical-align: middle;
+      }
+    }
+  }
+  .fixedButtom {
+    height: 50px;
+    line-height: 50px;
+    background: rgba(0, 0, 0, 0.5);
+    position: fixed;
+    bottom: 50px;
+    width: 100%;
+    z-index: 999;
+    box-sizing: border-box;
+    padding: 0 20px;
+    span {
+      color: #fff;
+      font-size: 14px;
+    }
+    span:nth-child(2) {
+      float: right;
+      background: #00a1fc;
+      border-radius: 30px;
+      height: 30px;
+      line-height: 30px;
+      padding: 0 15px;
+      margin-top: 25px;
+      transform: translateY(-50%);
+    }
+  }
+  .header {
+    width: 100%;
+    height: 44px;
+    line-height: 44px;
+    display: flex;
+    justify-content: space-between;
+    box-sizing: border-box;
+    padding-left: 12px;
+    padding-right: 16px;
+
+    span img {
+      vertical-align: middle;
+      height: 18px;
+    }
+    span:first-child {
+      width: 50px;
+    }
+  }
+  .headerDefault {
+    background-image: url("../../assets/preview/defaultBgTitle.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+  .headerOther {
+    background-image: url("../../assets/preview/detaillPromotion.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position-y: 24px;
+    background-color: #fff;
+  }
+  .headerPet {
+    background-image: url("../../assets/preview/petsBg.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+  .headerBeauty {
+    background-image: url("../../assets/preview/beautyBg.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+  .headerChild {
+    background-color: #ecf2d8;
+  }
+  .headerMarket {
+    background-image: url("../../assets/preview/marketBg.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-color: #fff;
+  }
+  .headerFoods {
+    background-color: #d9e8d2;
+  }
+  .headerFun {
+    background-image: url("../../assets/preview/recreationDetail.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    //background-position-y: 24px;
+    background-color: #fff;
+  }
+  .headerTravel {
+    background-image: url("../../assets/preview/travelDetail.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    //background-position-y: 24px;
+    background-color: #fff;
+  }
+  .detail_header {
+    background-size: 100%;
+    background-color: #fff;
+
+    .detail_header_bg {
+      position: absolute;
+      width: 100%;
+      height: 218px;
+      /*overflow: hidden;*/
+      /*opacity: 0.2;*/
+      top: 0;
+    }
+    .detail_header_beautyBg {
+      position: absolute;
+      width: 100%;
+      //height: 197px;
+      /*overflow: hidden;*/
+      /*opacity: 0.2;*/
+      top: 0;
+    }
+    .detail_header_petsBg {
+      position: absolute;
+      width: 100%;
+      //height: 174px;
+      /*overflow: hidden;*/
+      /*opacity: 0.2;*/
+      top: 0rem;
+    }
+    .detail_header_childBg {
+      position: absolute;
+      width: 100%;
+      height: 193px;
+      /*overflow: hidden;*/
+      /*opacity: 0.2;*/
+      top: 44px;
+    }
+    .detail_header_otherBg {
+      position: absolute;
+      width: 100%;
+      height: 193px;
+      /*overflow: hidden;*/
+      /*opacity: 0.2;*/
+      top: 24px;
+    }
+    .detail_header_travelBg {
+      position: absolute;
+      width: 100%;
+      height: 237px;
+      /*overflow: hidden;*/
+      /*opacity: 0.2;*/
+      top: 0rem;
+    }
+    .detail_header_funBg {
+      position: absolute;
+      width: 100%;
+      height: 237px;
+      /*overflow: hidden;*/
+      /*opacity: 0.2;*/
+      top: 0rem;
+    }
+    .detail_header_foodsBg {
+      position: absolute;
+      width: 100%;
+      height: 193px;
+      /*overflow: hidden;*/
+      /*opacity: 0.2;*/
+      top: 44px;
+    }
+
+    .mainHeader {
+      width: 343px;
+      height: 204px;
+      margin: 0 auto;
+      border-radius: 8px;
+      // padding-bottom: 7.5px;
+      background-color: #ffffff;
+      /*background-image: url("../../assets/preview/logo.png");*/
+      background-size: 100% 100%;
+      position: relative;
+      top: 16px;
+      box-shadow: 0 3px 3px -0.5px #03070b2b;
+      //z-index: 16;
+      .imgUrlSignUp {
+        width: 343px;
+        height: 204px;
+        background-size: 100% 100%;
+        border-radius: 8px;
+      }
+    }
+  }
+
+  .detail_title {
+    padding: 34px 16px 0 16px;
+    font-size: 16px;
+    background-color: #fff;
+    font-weight: bolder;
+    color: #333;
+    line-height: 23px;
+    display: -webkit-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .detail_num {
+    padding: 16px 16px 5px 16px;
+    background-color: #fff;
+
+    p {
+      color: #666666;
+      font-size: 10px;
+      margin-bottom: 16px;
+      span {
+        margin-right: 10px;
+        display: inline;
+      }
+    }
+
+    .detail_span {
+      color: #fc993c;
+      font-size: 24px;
+      font-weight: 500;
+
+      i {
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 400;
+      }
+    }
+  }
+
+  .detail_bg_line {
+    background-color: #ffffff;
+    i {
+      background-image: url("../../assets/preview/bg_line.png");
+      width: 94.4%;
+      height: 11px;
+      background-size: 100% 100%;
+      display: inline-block;
+      margin-left: 21px;
+    }
+  }
+  .detail_info {
+    padding: 0 16px 10px;
+    background-color: #fff;
+    .detail_info_time {
+      display: flex;
+      justify-content: space-between;
+      //align-items: center;
+      padding: 8px 0;
+      .detail_info_time_icon {
+        display: inline-block;
+        background-image: url("../../assets/preview/time.png");
+        width: 14px;
+        height: 14px;
+        background-size: 100% 100%;
+        margin-top: 2px;
+      }
+      .icon2 {
+        background-image: url("../../assets/preview/old.png");
+      }
+      .icon3 {
+        background-image: url("../../assets/preview/position.png");
+      }
+      .icon4 {
+        background-image: url("../../assets/preview/phone.png");
+      }
+      .detail_info_title {
+        font-size: 14px;
+        color: #666666;
+        flex: 0.88;
+        line-height: 18px;
+      }
+      .detail_info_line {
+        width: 1px;
+        height: 14px;
+        border-left: 1px solid #d7d7d7;
+        margin-top: 2px;
+      }
+      .detail_info_remind {
+        font-size: 14px;
+        color: #00a1fc;
+        margin-top: 2px;
+      }
+      .icon5 {
+        background-image: url("../../assets/preview/icon5.png");
+        width: 14px;
+        height: 14px;
+        background-size: 100% 100%;
+        margin-left: 6px;
+        margin-right: 8px;
+      }
+      .icon6 {
+        background-image: url("../../assets/preview/icon6.png");
+        width: 14px;
+        height: 14px;
+        background-size: 100% 100%;
+        margin-left: 6px;
+        margin-right: 8px;
+      }
+    }
+    .mainBody_header {
+      width: 343px;
+      margin: 10px auto 0;
+      border-radius: 8px;
+      background: #fff;
+      height: 48px;
+      line-height: 48px;
+      /*box-shadow: 0 1px 1px 1px #03070B2B;*/
+      box-shadow: 0 1.5px 3.5px 0 rgba(3, 11, 7, 0.35);
+      .itemContain {
+        height: 100%;
+        line-height: 48px;
+        overflow: hidden;
+        .listItem {
+          /*float: left;*/
+          width: 45px;
+          display: inline-block;
+          transition: all 0.6s;
+          text-align: center;
+          vertical-align: top;
+          img {
+            border-radius: 4px;
+            width: 34px;
+            height: 34px;
+            vertical-align: middle;
+          }
+          .right_border {
+            display: inline-block;
+            width: 0;
+            height: 12.5px;
+            border-right: solid 1px #e9e9e9;
+            vertical-align: middle;
+          }
+        }
+        .itemContainPre {
+          display: inline-block;
+          height: 115%;
+          width: 82%;
+          overflow-x: scroll;
+          -webkit-overflow-scrolling: touch;
+          overflow-y: hidden;
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+  .detail_container {
+    background-color: #fff;
+    padding-bottom: 10px;
+    .mainBody_nav {
+      width: 343px;
+      height: 40px;
+      line-height: 40px;
+      margin: 12px auto 0rem;
+      padding: 17.5px 0 0 0;
+      .itemContain {
+        line-height: 40px;
+        overflow: hidden;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .listItem {
+          vertical-align: middle;
+          font-size: 14px;
+          width: 165px;
+          height: 22px;
+          line-height: 22px;
+          text-align: center;
+          padding: 0 14px;
+        }
+        .achieve {
+          color: #feffff;
+          background: url("../../assets/preview/navBg.png");
+          background-size: 100% 100%;
+          background-repeat: no-repeat;
+          background-position-x: center;
+        }
+        .achieve1 {
+          color: #feffff;
+          background: url("../../assets/preview/petsNav.png");
+          background-size: 100% 100%;
+          background-repeat: no-repeat;
+          background-position-x: center;
+        }
+        .achieve2 {
+          color: #feffff;
+          background: url("../../assets/preview/beautyNav.png");
+          background-size: 100% 100%;
+          background-repeat: no-repeat;
+          background-position-x: center;
+        }
+        .achieve3 {
+          color: #feffff;
+          background: url("../../assets/preview/childNav.png");
+          background-size: 100% 100%;
+          background-repeat: no-repeat;
+          background-position-x: center;
+        }
+      }
+    }
+    .mainBody_desc {
+      margin: 10px 16px 0 16px;
+
+      .hideBg {
+        position: relative;
+        .notice {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 16px;
+          li {
+            p {
+              font-size: 14px;
+              border: 600;
+              color: #666;
+              line-height: 18px;
+              margin-top: 15px;
+              color: #fa2d4f;
+              i {
+                color: #fa2d4f;
+              }
+            }
+            pre {
+              color: #666;
+              font-size: 14px;
+              border: 600;
+              line-height: 18px;
+              margin-top: 15px;
+              padding-left: 30px;
+              white-space: pre-wrap !important;
+              word-wrap: break-word !important;
+              *white-space: normal !important;
+            }
+          }
+        }
+      }
+
+      .showBg {
+        p {
+          color: #666666;
+          font-size: 16px;
+        }
+      }
+      /* 摘要内容 */
+      .summary {
+        display: -webkit-box;
+        -webkit-line-clamp: 15;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis; /* 修剪文本 */
+        font-size: 16px;
+        color: #666666;
+        max-height: 300px;
+        padding-top: 1px; // 兼容华为头部被裁剪
+      }
+
+      .full {
+        text-overflow: ellipsis; /* 修剪文本 */
+        font-size: 16px;
+        color: #666666;
+        overflow: hidden;
+      }
+
+      /* 展开按钮 */
+      .showBtn {
+        width: 100%; /* 与背景宽度一致 */
+        height: 20px;
+        position: absolute; /* 相对父元素定位 */
+        bottom: 0rem; /* 刚好遮挡在最后两行 */
+        left: 0;
+        z-index: 0; /* 正序堆叠，覆盖在p元素上方 */
+        text-align: center;
+        background-color: #ffffff;
+        padding-top: 8px;
+        color: #ffffff;
+        font-size: 12px;
+
+      }
+      /* 收起按钮 */
+      .hideBtn {
+        text-align: right;
+      }
+
+      /* 向下角箭头 */
+      .downArrow {
+        display: inline-block;
+        background-image: url("../../assets/preview/downArrow.png");
+        width: 13px;
+        height: 8px;
+        background-size: 100% 100%;
+      }
+
+      .content_text {
+        margin: 20px 40px 0;
+        text-align: center;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        img {
+          width: 30%;
+          height: 30%;
+          display: inline-block;
+        }
+        span {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+  .choose_remind {
+    position: fixed;
+    bottom: 30%;
+    left: 10%;
+    z-index: 999;
+    background: #fff;
+    width: 80%;
+    border-radius: 10px;
+    padding-bottom: 10px;
+    .choose_pay_title {
+      font-size: 18px;
+      height: 47px;
+      line-height: 47px;
+      text-align: center;
+      position: relative;
+      border-bottom: 1px solid #d7d7d7;
+      img {
+        position: absolute;
+        top: 17px;
+        left: 20px;
+
+        height: 13px;
+
+        background: url("../../assets/preview/back.png");
+        background-size: 100% 100%;
+      }
+      span {
+        font-size: 14px;
+        color: #333;
+      }
+    }
+    .money_pay_choose {
+      margin: 10px 15px 0;
+      height: 55px;
+      position: relative;
+      border: 1px solid #d7d7d7;
+      background: rgba(255, 255, 255, 1);
+      border-radius: 4px;
+      .c1 {
+        height: 55px;
+        line-height: 55px;
+        i {
+          font-size: 16px;
+          color: #333;
+          height: 20px;
+          margin-left: 10px;
+          font-style: normal;
+        }
+      }
+      .c2 {
+        height: 55px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 10px;
+        .content_left {
+          .price {
+            font-size: 16px;
+            color: #333333;
+            font-weight: 600;
+          }
+          .item {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #666666;
+          }
+        }
+        .content_right {
+          font-size: 14px;
+          color: #999999;
+          i {
+            color: #00a1fc;
+          }
+          .no_choose {
+            color: #cccccc !important;
+          }
+        }
+      }
+      .no_choose {
+        color: #cccccc !important;
+      }
+    }
+    .no_choose {
+      background-color: #ededed;
+    }
+    .choose_border {
+      border: 1px solid #00a1fc;
+    }
+    .go_next {
+      margin: 29px 15px 20px;
+      width: 345px;
+      height: 41px;
+      background: rgba(0, 161, 252, 1);
+      border-radius: 4px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 1);
+      border: none;
+    }
+    .disable {
+      background: #f4f4f5 !important;
+      color: #bcbec2 !important;
+      cursor: not-allowed;
+    }
+  }
+  .choose_remind_shadow {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    background: #000;
+    opacity: 0.6;
+    z-index: 998;
+  }
+  .mapContainer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    z-index: 999;
+    .mapItem {
+      padding: 0 16px;
+      height: 60px;
+      line-height: 60px;
+      position: relative;
+      img {
+        width: 25px;
+        height: 25px;
+        vertical-align: middle;
+      }
+      i {
+        font-size: 14px;
+        color: #333;
+        height: 20px;
+        margin-left: 10px;
+        font-style: normal;
+      }
+      &:nth-child(1) {
+        border-bottom: 1px solid #d7d7d7;
+      }
+    }
+  }
+  .sign_up {
+    margin-top: 3px;
+    padding: 16px;
+    background-color: #fff;
+    /*height:425px ;*/
+    h2 {
+      border-bottom: 1px solid #d7d7d7;
+      padding-bottom: 16px;
+      font-size: 16px;
+      color: #333333;
+      font-weight: 550;
+      span {
+        float: right;
+        font-size: 16px;
+        color: #333333;
+        font-weight: 550;
+        i {
+          color: #fa2d4f;
+          font-weight: 550;
+        }
+      }
+    }
+    .sign_up_img {
+      display: flex;
+      justify-content: flex-start;
+      margin-top: 16px;
+
+      .sign_up_content {
+        text-align: center;
+        margin-right: 3px;
+        img {
+          width: 46px;
+          height: 46px;
+          border-radius: 50%;
+          margin-bottom: 5.5px;
+        }
+        p {
+          font-size: 10px;
+          color: #999999;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          width: 66px;
+          height: 14px;
+          line-height: 14px;
+        }
+      }
+      /*img{*/
+      /*  height: 99px;*/
+      /*  width: 146px;*/
+      /*  margin-right: 12px;*/
+      /*}*/
+    }
+    .sign_up_no {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      margin: 14px 62px;
+      img {
+        width: 84px;
+        height: 36px;
+        margin-right: 77.5px;
+      }
+    }
+  }
+  .mainComment {
+    //margin-top: 15px;
+    padding: 0.8em 13px 10px 13px;
+    // margin-left: -15px;
+    // margin-right: -15px;
+    border-top: 5px solid #f8f8f8;
+    /*text-align: center;*/
+    // border-bottom: 5px solid #f8f8f8;
+    background-color: #fff;
+    .commentHeight {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 23px;
+      margin-left: 10px;
+      img {
+        width: 89px;
+        height: 23px;
+      }
+      span {
+        color: #f5ac3a;
+        font-size: 14px;
+        margin-right: 10px;
+      }
+    }
+    .commentContent {
+      margin: 0 13px;
+      .commentTitle {
+        display: flex;
+        align-items: center;
+        margin-bottom: 9px;
+        img {
+          width: 25px;
+          height: 25px;
+          border-radius: 50%;
+        }
+        span {
+          color: #999999;
+          font-size: 13px;
+          margin-left: 6px;
+        }
+      }
+      .commentShow {
+        color: #070707;
+        font-size: 12px;
+        line-height: 16px;
+        font-weight: 600;
+        margin: 10px 0;
+      }
+      .listImage {
+        display: flex;
+        width: 300px;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        // margin-bottom: 10px;
+        .childImg {
+          width: 91px;
+          height: 91px;
+          margin: 0 7.5px 7.5px 0;
+        }
+      }
+    }
+    .noComment {
+      margin-left: 135px;
+      width: 78px;
+      height: 99px;
+    }
+  }
+  .nothing {
+    border-top: 0.5px solid #fdfdfd;
+    background-color: #ffffff;
+    text-align: center;
+    padding: 70px;
+    img {
+      width: 112px;
+      /*border-radius: 50%;*/
+      /*box-shadow:0 1.5px 3.5px 0 rgba(0, 0, 0, 0.35);*/
+      margin-bottom: 70px;
+    }
+    p {
+      font-size: 14px;
+      color: #333333;
+    }
+  }
+}
+</style>
+
